@@ -67,6 +67,14 @@ class Product:
         self.build_product()
         self.prod_graph()
 
+        self.mecs = self.mec_decomposition()
+        self.aecs = self.aecs_from_mecs(self.mecs)
+        self.target = set().union(*self.aecs) if self.aecs else set()
+        self.win_region = self.almost_sure_winning(self.target)
+
+
+
+
     def build_product(self):
         for s in self.mdp.states:
             next_qs = self.buchi.step(self.buchi.q0, self.mdp.label[s]) | {self.buchi.q0}

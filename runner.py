@@ -37,10 +37,10 @@ if __name__ == "__main__":
             Buchi.add_edge(0, lab, 0)
             Buchi.add_edge(1, lab, 0)
 
+
+
     Prod = Product(MDP, Buchi)
-
-    res, Prod = qualitative_buchi_mdp(MDP, Buchi, Prod)
-
+    res = qualitative_buchi_mdp(Prod)
     print("#product states:", len(res["product_states"]))
     print("#AECs:", len(res["AECs"]))
     print("winning |W|:", len(res["winning_product_states"]))
