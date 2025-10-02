@@ -195,20 +195,6 @@ class Product:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def qualitative_buchi_mdp(MDP, BuchiA):
     Prod = Product(MDP, BuchiA)
     mecs = Prod.mec_decomposition()
@@ -221,15 +207,6 @@ def qualitative_buchi_mdp(MDP, BuchiA):
         "target_union": target,
         "winning_product_states": win_region,
     }
-
-
-
-def add_total_loops_for_labels(B: BuchiA, labels: Iterable[Label]):
-    for lab in labels:
-        B.add_edge(0, lab, 0)
-
-
-
 
 
 if __name__ == "__main__":
