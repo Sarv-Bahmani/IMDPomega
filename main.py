@@ -70,27 +70,34 @@ class Product:
 
     def build_product(self):
         for s in self.mdp.states:
-            next_qs = self.buchi.step(self.buchi.q0, self.mdp.label[s]) or {self.buchi.q0}
+            next_qs = self.buchi.step(self.buchi.q0, self.mdp.label[s]) | {self.buchi.q0}
             for q_prime in next_qs:
                 ps = (s, q_prime)
                 self.states.add(ps)
                 if q_prime in self.buchi.acc:
                     self.acc_states.add(ps)
 
-        for (s, q) in list(self.states):
-            for a in self.mdp.actions.get(s, ()):
-                outs = self.mdp.trans_MDP.get((s, a), {})
-                if not outs: continue
-                self.actions[(s, q)].add(a)
-                prod_outs = {}
-                for s2, prob in outs.items():
-                    for q3 in (self.buchi.step(q, self.mdp.label[s]) or {q}):
-                        ps = (s2, q3)
-                        self.states.add(ps)
-                        prod_outs[ps] = prod_outs.get(ps, 0.0) + prob
-                        if q3 in self.buchi.acc:
-                            self.acc_states.add(ps)
-                self.trans_prod[((s, q), a)] = prod_outs
+        listnow = list(self.states)
+        for (s, q) in listnow:
+            self.trans_update(s, q)
+
+
+    def trans_update(self, s, q):
+        for a in self.mdp.actions.get(s, ()):
+            outs = self.mdp.trans_MDP.get((s, a), {})
+            if not outs: continue
+            self.actions[(s, q)].add(a)
+            prod_outs = {}
+            for s2, prob in outs.items():
+                for q3 in (self.buchi.step(q, self.mdp.label[s]) or {q}):
+                    ps = (s2, q3)
+                    self.states.add(ps)
+                    prod_outs[ps] = prod_outs.get(ps, 0.0) + prob
+                    if q3 in self.buchi.acc:
+                        self.acc_states.add(ps)
+            self.trans_prod[((s, q), a)] = prod_outs
+
+
 
 
     def prod_graph(self) -> Dict[ProdState, Set[ProdState]]:
@@ -100,58 +107,65 @@ class Product:
                     self.graph[ps].add(t)
 
 
+    def sccs(self):
+        nodes = self.states
+        edges = self.graph
+        idx, low, st, on, comps = {}, {}, [], set(), []
+        i = 0
+        def dfs(v):
+            nonlocal i
+            idx[v] = i; low[v] = i; i += 1
+            st.append(v); on.add(v)
+            for w in edges.get(v, ()):
+                if w not in idx:
+                    dfs(w); low[v] = min(low[v], low[w])
+                elif w in on:
+                    low[v] = min(low[v], idx[w])
+            if low[v] == idx[v]:
+                C = set()
+                while True:
+                    w = st.pop(); on.remove(w); C.add(w)
+                    if w == v: break
+                comps.append(C)
+        for v in nodes:
+            if v not in idx:
+                dfs(v)
+        return comps
 
-def sccs(nodes: Set[ProdState], edges: Dict[ProdState, Set[ProdState]]) -> List[Set[ProdState]]:
-    idx, low, st, on, comps = {}, {}, [], set(), []
-    i = 0
-    def dfs(v):
-        nonlocal i
-        idx[v] = i; low[v] = i; i += 1
-        st.append(v); on.add(v)
-        for w in edges.get(v, ()):
-            if w not in idx:
-                dfs(w); low[v] = min(low[v], low[w])
-            elif w in on:
-                low[v] = min(low[v], idx[w])
-        if low[v] == idx[v]:
-            C = set()
-            while True:
-                w = st.pop(); on.remove(w); C.add(w)
-                if w == v: break
-            comps.append(C)
-    for v in nodes:
-        if v not in idx:
-            dfs(v)
-    return comps
 
-def closed_actions(P: Product, S: Set[ProdState]) -> Dict[ProdState, Set[Action]]:
-    keep: Dict[ProdState, Set[Action]] = {}
-    for s in S:
-        kept = set()
-        for a in P.actions.get(s, ()):
-            outs = P.trans_prod.get((s, a), {})
-            if outs and all((t in S) for t in outs):
-                kept.add(a)
-        if kept:
-            keep[s] = kept
-    return keep
+    def closed_actions(self, SCC: Set[ProdState]) -> Dict[ProdState, Set[Action]]:
+        keep: Dict[ProdState, Set[Action]] = {}
+        for s in SCC:
+            kept = set()
+            for a in self.actions.get(s, ()):
+                outs = self.trans_prod.get((s, a), {})
+                if outs and all((t in SCC) for t in outs):
+                    kept.add(a)
+            if kept:
+                keep[s] = kept
+        return keep
+
+
+
+
+
+
 
 # ---------- MECs and AECs ----------
 def mec_decomposition(P: Product) -> List[Set[ProdState]]:
-    E = P.graph
     mecs: List[Set[ProdState]] = []
-    for C in sccs(P.states, E):
-        S = set(C)
+    for C in P.sccs():
+        SCC = set(C)
         changed = True
         while changed:
             changed = False
-            keep = closed_actions(P, S)
-            drop = [s for s in S if s not in keep]
+            keep = P.closed_actions(SCC)
+            drop = [s for s in SCC if s not in keep]
             if drop:
-                for s in drop: S.remove(s)
+                for s in drop: SCC.remove(s)
                 changed = True
-        if S:
-            mecs.append(S)
+        if SCC:
+            mecs.append(SCC)
     # Keep only maximal by inclusion
     mecs.sort(key=lambda X: -len(X))
     maximal = []
@@ -193,14 +207,14 @@ def almost_sure_winning(P: Product, T: Set[ProdState]) -> Set[ProdState]:
     return R
 
 # ---------- Full pipeline for qualitative Büchi on MDP ----------
-def qualitative_buchi_mdp(M: MDP, B: BuchiA):
-    P = Product(M, B)
-    mecs = mec_decomposition(P)
-    aecs = aecs_from_mecs(P, mecs)
+def qualitative_buchi_mdp(MDP, BuchiA):
+    Prod = Product(MDP, BuchiA)
+    mecs = mec_decomposition(Prod)
+    aecs = aecs_from_mecs(Prod, mecs)
     T = set().union(*aecs) if aecs else set()
-    W = almost_sure_winning(P, T)
+    W = almost_sure_winning(Prod, T)
     return {
-        "product_states": P.states,
+        "product_states": Prod.states,
         "AECs": aecs,
         "target_union": T,
         "winning_product_states": W,
@@ -212,31 +226,52 @@ def add_total_loops_for_labels(B: BuchiA, labels: Iterable[Label]):
     for lab in labels:
         B.add_edge(0, lab, 0)
 
-# ---------- Demo ----------
+
+
+
+
 if __name__ == "__main__":
-    # Your 2-state model (s0 labelled g, s1 labelled b), each step flips/stays with prob 1/2.
-    M = MDP()
-    s0, s1 = 0, 1
-    M.states.update([s0, s1])
-    M.actions[s0].add("a"); M.actions[s1].add("a")
-    M.trans_MDP[(s0, "a")] = {s0: 0.5, s1: 0.5}
-    M.trans_MDP[(s1, "a")] = {s0: 0.5, s1: 0.5}
-    M.label[s0] = frozenset({"g"})
-    M.label[s1] = frozenset({"b"})
+    mdp = MDP()
+    s0, s1, s2, s3 = 0, 1, 2, 3
+    mdp.states.update([s0, s1, s2, s3])
+
+    mdp.actions[s0].add("a")
+    mdp.actions[s1].update(["safe", "risky", "detour"])
+    mdp.actions[s2].update(["safe", "loop"])
+    mdp.actions[s3].add("a")
+
+    mdp.trans_MDP[(s0, "a")]      = {s0: 0.6, s1: 0.4}
+    mdp.trans_MDP[(s1, "safe")]   = {s0: 1.0}
+    mdp.trans_MDP[(s1, "risky")]  = {s3: 1.0}
+    mdp.trans_MDP[(s1, "detour")] = {s2: 1.0}
+    mdp.trans_MDP[(s2, "safe")]   = {s0: 1.0}
+    mdp.trans_MDP[(s2, "loop")]   = {s2: 1.0}
+    mdp.trans_MDP[(s3, "a")]      = {s3: 1.0}
+
+    mdp.label[s0] = frozenset({"g"})
+    mdp.label[s1] = frozenset({"b"})
+    mdp.label[s2] = frozenset({"b"})
+    mdp.label[s3] = frozenset({"b"})
 
     AP = {"g", "b"}
+    buchi = BuchiA(AP) # GF g
+    buchi.add_state(0, initial=True, accepting=False)   # q0
+    buchi.add_state(1, accepting=True)                  # q1
+    all_labels = {mdp.label[s0], mdp.label[s1], mdp.label[s2], mdp.label[s3]}
+    for lab in all_labels:
+        if "g" in lab:
+            buchi.add_edge(0, lab, 1)
+            buchi.add_edge(1, lab, 1)
+        else:
+            buchi.add_edge(0, lab, 0)
+            buchi.add_edge(1, lab, 0)
 
-    B = BuchiA(AP)
-    B.add_state(0, initial=True)
 
+    # ---------- Run your pipeline ----------
+    res = qualitative_buchi_mdp(mdp, buchi)
 
-    # Add the exact labels we will encounter in M:
-    add_total_loops_for_labels(B, {M.label[s0], M.label[s1]})
-
-    res = qualitative_buchi_mdp(M, B)
     print("#product states:", len(res["product_states"]))
     print("#AECs:", len(res["AECs"]))
     print("winning |W|:", len(res["winning_product_states"]))
-    # Show base-state projection of winners:
     winners_base = {s for (s, q) in res["winning_product_states"]}
-    print("base winners:", winners_base)
+    print("base winners (expect {0,1,2}):", winners_base)
