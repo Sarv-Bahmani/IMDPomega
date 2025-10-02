@@ -48,15 +48,15 @@ class BuchiA:
         if initial: self.q0 = q
         if accepting: self.acc.add(q)
 
-    def add_edge(self, q: QState, lab: Label, q2: QState):
+    def add_edge(self, q, lab, q2):
         self.trans_automa[(q, lab)].add(q2)
 
-    def step(self, q: QState, lab: Label) -> Set[QState]:
+    def step(self, q, lab) -> Set[QState]:
         return self.trans_automa.get((q, lab), set())
 
 
 class Product:
-    def __init__(self, mdp: MDP, buchi: BuchiA):
+    def __init__(self, mdp, buchi):
         self.mdp = mdp
         self.buchi = buchi
         self.states: Set[ProdState] = set()
@@ -76,11 +76,13 @@ class Product:
                 self.states.add(ps)
                 if q_prime in self.buchi.acc:
                     self.acc_states.add(ps)
-
-        listnow = list(self.states)
-        for (s, q) in listnow:
+        list_now = list(self.states)
+        for (s, q) in list_now:
             self.trans_update(s, q)
-
+        list_after = list(self.states)
+        list_after = list(set(list_after) - set(list_now))
+        for (s, q) in list_after:
+            self.trans_update(s, q)
 
     def trans_update(self, s, q):
         for a in self.mdp.actions.get(s, ()):
@@ -96,8 +98,6 @@ class Product:
                     if q3 in self.buchi.acc:
                         self.acc_states.add(ps)
             self.trans_prod[((s, q), a)] = prod_outs
-
-
 
 
     def prod_graph(self) -> Dict[ProdState, Set[ProdState]]:
@@ -187,7 +187,7 @@ def almost_sure_winning(P: Product, T: Set[ProdState]) -> Set[ProdState]:
     changed = True
     while changed:
         changed = False
-        keep = closed_actions(P, S)
+        keep = P.closed_actions(S)
         to_remove = [s for s in S if s not in keep]
         if to_remove:
             for s in to_remove: S.remove(s)
