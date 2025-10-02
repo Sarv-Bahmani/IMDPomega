@@ -43,7 +43,7 @@ class BuchiA:
         self.acc: Set[QState] = set()
         self.trans_automa: Dict[Tuple[QState, Label], Set[QState]] = defaultdict(set)
 
-    def add_state(self, q: QState, initial=False, accepting=False):
+    def add_state(self, q, initial=False, accepting=False):
         self.Q.add(q)
         if initial: self.q0 = q
         if accepting: self.acc.add(q)
@@ -66,7 +66,6 @@ class Product:
         self.graph = defaultdict(set)
         self.build_product()
         self.prod_graph()
-
 
     def build_product(self):
         for s in self.mdp.states:
@@ -99,13 +98,11 @@ class Product:
                         self.acc_states.add(ps)
             self.trans_prod[((s, q), a)] = prod_outs
 
-
     def prod_graph(self) -> Dict[ProdState, Set[ProdState]]:
         for (ps, a), outs in self.trans_prod.items():
             for t, prob in outs.items():
                 if prob > 0:
                     self.graph[ps].add(t)
-
 
     def sccs(self):
         nodes = self.states
@@ -132,7 +129,6 @@ class Product:
                 dfs(v)
         return comps
 
-
     def closed_actions(self, SCC: Set[ProdState]) -> Dict[ProdState, Set[Action]]:
         keep: Dict[ProdState, Set[Action]] = {}
         for s in SCC:
@@ -145,79 +141,85 @@ class Product:
                 keep[s] = kept
         return keep
 
+    def mec_decomposition(self) -> List[Set[ProdState]]:
+        mecs: List[Set[ProdState]] = []
+        for C in self.sccs():
+            SCC = set(C)
+            changed = True
+            while changed:
+                changed = False
+                keep = self.closed_actions(SCC)
+                drop = [s for s in SCC if s not in keep]
+                if drop:
+                    for s in drop: SCC.remove(s)
+                    changed = True
+            if SCC:
+                mecs.append(SCC)
+        mecs.sort(key=lambda X: -len(X))
+        maximal = []
+        for i, M1 in enumerate(mecs):
+            if any(M1 < M2 for j, M2 in enumerate(mecs) if j != i):
+                continue
+            maximal.append(M1)
+        return maximal
 
+    def aecs_from_mecs(self, mecs: Iterable[Set[ProdState]]) -> List[Set[ProdState]]:
+        return [C for C in mecs if any(ps in self.acc_states for ps in C)]
 
-
-
-
-
-# ---------- MECs and AECs ----------
-def mec_decomposition(P: Product) -> List[Set[ProdState]]:
-    mecs: List[Set[ProdState]] = []
-    for C in P.sccs():
-        SCC = set(C)
+    def almost_sure_winning(self, Targ: Set[ProdState]) -> Set[ProdState]:
+        if not Targ:
+            return set()
+        prod_states = set(self.states)
         changed = True
         while changed:
             changed = False
-            keep = P.closed_actions(SCC)
-            drop = [s for s in SCC if s not in keep]
-            if drop:
-                for s in drop: SCC.remove(s)
+            keep = self.closed_actions(prod_states)
+            to_remove = [state for state in prod_states if state not in keep]
+            if to_remove:
+                for state in to_remove: prod_states.remove(state)
                 changed = True
-        if SCC:
-            mecs.append(SCC)
-    # Keep only maximal by inclusion
-    mecs.sort(key=lambda X: -len(X))
-    maximal = []
-    for i, M1 in enumerate(mecs):
-        if any(M1 < M2 for j, M2 in enumerate(mecs) if j != i):
-            continue
-        maximal.append(M1)
-    return maximal
+        Region = set(Targ)
+        added = True
+        while added:
+            added = False
+            for statee in list(prod_states):
+                if statee in Region:
+                    continue
+                for a in self.actions.get(statee, ()):
+                    outs = self.trans_prod.get((statee, a), {})
+                    if outs:
+                        if all(t in prod_states for t in outs):
+                            if any(t in Region for t in outs):
+                                Region.add(statee); added = True; break
+        return Region
 
-def aecs_from_mecs(P: Product, mecs: Iterable[Set[ProdState]]) -> List[Set[ProdState]]:
-    return [C for C in mecs if any(ps in P.acc_states for ps in C)]
 
-# ---------- Qualitative almost-sure reachability to T ----------
-def almost_sure_winning(P: Product, T: Set[ProdState]) -> Set[ProdState]:
-    if not T:
-        return set()
-    # 1) Greatest "safe" set S: there exists an action whose support stays inside S
-    S = set(P.states)
-    changed = True
-    while changed:
-        changed = False
-        keep = P.closed_actions(S)
-        to_remove = [s for s in S if s not in keep]
-        if to_remove:
-            for s in to_remove: S.remove(s)
-            changed = True
-    # 2) Restrict to states that can (controller-wise) reach T without leaving S
-    R = set(T)
-    added = True
-    while added:
-        added = False
-        for s in list(S):
-            if s in R:
-                continue
-            for a in P.actions.get(s, ()):
-                outs = P.trans_prod.get((s, a), {})
-                if outs and all(t in S for t in outs) and any(t in R for t in outs):
-                    R.add(s); added = True; break
-    return R
 
-# ---------- Full pipeline for qualitative Büchi on MDP ----------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def qualitative_buchi_mdp(MDP, BuchiA):
     Prod = Product(MDP, BuchiA)
-    mecs = mec_decomposition(Prod)
-    aecs = aecs_from_mecs(Prod, mecs)
-    T = set().union(*aecs) if aecs else set()
-    W = almost_sure_winning(Prod, T)
+    mecs = Prod.mec_decomposition()
+    aecs = Prod.aecs_from_mecs(mecs)
+    target = set().union(*aecs) if aecs else set()
+    win_region = Prod.almost_sure_winning(target)
     return {
         "product_states": Prod.states,
         "AECs": aecs,
-        "target_union": T,
-        "winning_product_states": W,
+        "target_union": target,
+        "winning_product_states": win_region,
     }
 
 
@@ -267,11 +269,10 @@ if __name__ == "__main__":
             buchi.add_edge(1, lab, 0)
 
 
-    # ---------- Run your pipeline ----------
     res = qualitative_buchi_mdp(mdp, buchi)
 
     print("#product states:", len(res["product_states"]))
     print("#AECs:", len(res["AECs"]))
     print("winning |W|:", len(res["winning_product_states"]))
     winners_base = {s for (s, q) in res["winning_product_states"]}
-    print("base winners (expect {0,1,2}):", winners_base)
+    print("base winners:", winners_base)
