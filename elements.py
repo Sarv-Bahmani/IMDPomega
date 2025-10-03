@@ -39,7 +39,7 @@ class BuchiA:
     def __init__(self, ap: Set[str]):
         self.ap = set(ap)
         self.Q: Set[QState] = set()
-        self.q0 = None
+        self.q0 = 0
         self.acc: Set[QState] = set()
         self.trans_automa: Dict[Tuple[QState, Label], Set[QState]] = defaultdict(set)
 
