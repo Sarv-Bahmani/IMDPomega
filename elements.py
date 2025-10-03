@@ -39,7 +39,7 @@ class BuchiA:
     def __init__(self, ap: Set[str]):
         self.ap = set(ap)
         self.Q: Set[QState] = set()
-        self.q0: QState = 0
+        self.q0 = None
         self.acc: Set[QState] = set()
         self.trans_automa: Dict[Tuple[QState, Label], Set[QState]] = defaultdict(set)
 
@@ -71,8 +71,6 @@ class Product:
         self.aecs = self.aecs_from_mecs(self.mecs)
         self.target = set().union(*self.aecs) if self.aecs else set()
         self.win_region = self.almost_sure_winning(self.target)
-
-
 
 
     def build_product(self):
