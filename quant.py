@@ -277,14 +277,12 @@ def interval_iteration(P, T: Set[ProdState], eps: float = 1e-10, max_iter: int =
 
     return L, U
 
-# ---------- Büchi quantitative wrapper ----------
 def quantitative_buchi_imdp(I: IMDP, B: BuchiA, eps: float = 1e-10):
     P = Product(I, B)
     mecs = P.mec_decomposition()
     aecs = P.aecs_from_mecs(mecs)
     T: Set[ProdState] = set().union(*aecs) if aecs else set()
     L, U = interval_iteration(P, T, eps=eps)
-    a = 5
     return {
         "product": P,
         "AECs": aecs,
@@ -293,31 +291,11 @@ def quantitative_buchi_imdp(I: IMDP, B: BuchiA, eps: float = 1e-10):
         "U": U,   # maximal (optimistic) probabilities to satisfy Büchi
     }
 
-# ---------- Helpers to build common automata ----------
-def buchi_GF_g_state_accepting():
-    """Two-state deterministic Büchi for GF g over AP={g,b} but we only check 'g'."""
-    AP = {"g", "b"}
-    B = BuchiA(AP)
-    B.add_state(0, initial=True, accepting=False)  # q0
-    B.add_state(1, accepting=True)                 # q1
-    # labs = [frozenset({"g"}), frozenset({"b"}), frozenset({"g"}),frozenset({"b"})]
-    labs = [frozenset({lab}) for lab in AP]
-    for lab in labs:
-        if "g" in lab:
-            B.add_edge(0, lab, 1)
-            B.add_edge(1, lab, 1)
-        else:
-            B.add_edge(0, lab, 0)
-            B.add_edge(1, lab, 0)
-    return B
 
 
 if __name__ == "__main__":
 
     print("\n=== IMDP demo (L <= U, strict) ===")
-    # States: s0 (g), s1 (neutral choice), s2 (trap, no g)
-    # At s1, action 'risky' has uncertain prob to trap in [0.6,1.0] (to g in [0,0.4]),
-    #        action 'safe' returns to s0 with [1,1].
     I = IMDP()
     s0, s1, s2 = 0, 1, 2
     I.states.update([s0, s1, s2])
@@ -329,15 +307,26 @@ if __name__ == "__main__":
     I.intervals[(s1, "risky")] = {s2: (0.6, 1.0), s0: (0.0, 0.4)}
     I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
 
-    B = buchi_GF_g_state_accepting()
+    AP = {"g", "b"}
+    B = BuchiA(AP)
+    B.add_state(0, initial=True, accepting=False)  # q0
+    B.add_state(1, accepting=True)  # q1
+    labs = [frozenset({lab}) for lab in AP]
+    for lab in labs:
+        if "g" in lab:
+            B.add_edge(0, lab, 1)
+            B.add_edge(1, lab, 1)
+        else:
+            B.add_edge(0, lab, 0)
+            B.add_edge(1, lab, 0)
 
 
     res = quantitative_buchi_imdp(I, B, eps=1e-12)
     L, U = res["L"], res["U"]
 
-    # Project to base
+
     proj_L = defaultdict(float); proj_U = defaultdict(float)
     for (s, q), v in L.items(): proj_L[s] = max(proj_L[s], v)
     for (s, q), v in U.items(): proj_U[s] = max(proj_U[s], v)
-    print("L (min probs) by base state:", dict(proj_L))  # robust (nature adversarial)
-    print("U (max probs) by base state:", dict(proj_U))  # optimistic
+    print("L (min probs) by base state:", dict(proj_L))
+    print("U (max probs) by base state:", dict(proj_U))
