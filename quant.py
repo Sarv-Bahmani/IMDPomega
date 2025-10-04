@@ -237,7 +237,6 @@ def max_expectation_for_action(intervals_list: List[Tuple[ProdState, float, floa
 
 # ---------- Interval Iteration (returns L, U) ----------
 def interval_iteration(P, T: Set[ProdState], eps: float = 1e-10, max_iter: int = 100000):
-    # Initialize: targets are 1; others 0
     L: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
     U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
 
@@ -277,16 +276,12 @@ def interval_iteration(P, T: Set[ProdState], eps: float = 1e-10, max_iter: int =
 
     return L, U
 
-def quantitative_buchi_imdp(I: IMDP, B: BuchiA, eps: float = 1e-10):
-    P = Product(I, B)
-    mecs = P.mec_decomposition()
-    aecs = P.aecs_from_mecs(mecs)
-    T: Set[ProdState] = set().union(*aecs) if aecs else set()
-    L, U = interval_iteration(P, T, eps=eps)
+def quantitative_buchi_imdp(P, eps: float = 1e-10):
+    L, U = interval_iteration(P, P.target, eps=eps)
     return {
         "product": P,
-        "AECs": aecs,
-        "target_union": T,
+        "AECs": P.aecs,
+        "target_union": P.target,
         "L": L,   # minimal (robust) probabilities to satisfy Büchi
         "U": U,   # maximal (optimistic) probabilities to satisfy Büchi
     }
@@ -304,7 +299,7 @@ if __name__ == "__main__":
 
     I.intervals[(s0, "a")] = {s0: (0.5, 0.5), s1: (0.5, 0.5)}
     I.intervals[(s1, "safe")]  = {s0: (1.0, 1.0)}
-    I.intervals[(s1, "risky")] = {s2: (0.6, 1.0), s0: (0.0, 0.4)}
+    I.intervals[(s1, "risky")] = {s2: (0.6, 1.0) , s0: (0.0, 0.4)}
     I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
 
     AP = {"g", "b"}
@@ -320,8 +315,8 @@ if __name__ == "__main__":
             B.add_edge(0, lab, 0)
             B.add_edge(1, lab, 0)
 
-
-    res = quantitative_buchi_imdp(I, B, eps=1e-12)
+    P = Product(I, B)
+    res = quantitative_buchi_imdp(P, eps=1e-12)
     L, U = res["L"], res["U"]
 
 
