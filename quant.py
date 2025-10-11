@@ -236,7 +236,7 @@ def max_expectation_for_action(intervals_list: List[Tuple[ProdState, float, floa
     return exp
 
 # ---------- Interval Iteration (returns L, U) ----------
-def interval_iteration(P, T: Set[ProdState], eps: float = 1e-10, max_iter: int = 100000):
+def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 100):
     L: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
     U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
 
@@ -292,15 +292,45 @@ if __name__ == "__main__":
 
     print("\n=== IMDP demo (L <= U, strict) ===")
     I = IMDP()
-    s0, s1, s2 = 0, 1, 2
-    I.states.update([s0, s1, s2])
-    I.actions[s0].add("a"); I.actions[s1].update(["safe", "risky"]); I.actions[s2].add("a")
-    I.label[s0] = frozenset({"g"}); I.label[s1] = frozenset({"b"}); I.label[s2] = frozenset({"b"})
+    # s0, s1, s2 = 0, 1, 2
+    # I.states.update([s0, s1, s2])
+    # I.actions[s0].add("a"); I.actions[s1].update(["safe", "risky"]); I.actions[s2].add("a")
+    # I.label[s0] = frozenset({"g"}); I.label[s1] = frozenset({"b"}); I.label[s2] = frozenset({"b"})
+
+    # I.intervals[(s0, "a")] = {s0: (0.5, 0.5), s1: (0.5, 0.5)}
+    # I.intervals[(s1, "safe")]  = {s0: (1.0, 1.0)}
+    # I.intervals[(s1, "risky")] = {s2: (0.6, 1.0) , s0: (0.0, 0.4)}
+    # I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
+
+
+    # s0, s1, s2, s3 = 0, 1, 2, 3
+    # I.states.update([s0, s1, s2, s3])
+    # I.actions[s0].add("a"); I.actions[s1].update(["safe", "risky"]); I.actions[s2].add("a"); I.actions[s0].update(["safe"]); I.actions[s3].add("safe")
+    # I.label[s0] = frozenset({"g"}); I.label[s1] = frozenset({"b"}); I.label[s2] = frozenset({"b"}); I.label[s3] = frozenset({"g"})
+
+    # I.intervals[(s0, "a")] = {s0: (0.5, 0.5), s1: (0.5, 0.5)}
+    # I.intervals[(s1, "safe")]  = {s0: (1.0, 1.0)}
+    # I.intervals[(s1, "risky")] = {s2: (0.6, 1.0) , s0: (0.0, 0.4)}
+    # I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
+    # I.intervals[(s0, "safe")]   = {s3: (1.0, 1.0)}
+    # I.intervals[(s3, "safe")]   = {s3: (1.0, 1.0)}
+
+
+
+    # w, m, f, t = 0, 1, 2, 3
+    s0, s1, s2, s3 = 0, 1, 2, 3
+    I.states.update([s0, s1, s2, s3])
+    I.actions[s0].add("a"); I.actions[s1].update(["safe", "risky"]); I.actions[s2].add("a"); I.actions[s0].update(["safe"]); I.actions[s3].add("safe")
+    I.label[s0] = frozenset({"g"}); I.label[s1] = frozenset({"b"}); I.label[s2] = frozenset({"b"}); I.label[s3] = frozenset({"g"})
 
     I.intervals[(s0, "a")] = {s0: (0.5, 0.5), s1: (0.5, 0.5)}
-    I.intervals[(s1, "safe")]  = {s0: (1.0, 1.0)}
-    I.intervals[(s1, "risky")] = {s2: (0.6, 1.0) , s0: (0.0, 0.4)}
+    I.intervals[(s1, "risky")] = {s2: (0.6, 0.9) , s0: (0.0, 0.4)}
     I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
+    I.intervals[(s0, "safe")]   = {s3: (1.0, 1.0)}
+    I.intervals[(s3, "safe")]   = {s3: (1.0, 1.0)}
+
+
+
 
     AP = {"g", "b"}
     B = BuchiA(AP)
