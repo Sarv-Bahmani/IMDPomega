@@ -139,3 +139,17 @@ def build_imdp(sta_path: str, lab_path: str, tra_path: str) -> IMDP:
     # hdr[1] == number of (s,a) pairs; hdr[2] == total transitions
     # print("Header:", hdr, " | pairs:", len(M.trans), " | edges:", sum(len(v) for v in M.trans.values()))
     return M
+
+
+
+
+
+M = build_imdp(
+    "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/Abstraction_interval.sta",
+    "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/Abstraction_interval.lab",
+    "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/Abstraction_interval.tra"
+)
+
+
+a = 3 
+print(2)

@@ -304,7 +304,6 @@ if __name__ == "__main__":
     # I.intervals[(s1, "risky")] = {s2: (0.6, 1.0) , s0: (0.0, 0.4)}
     # I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
 
-
     # s0, s1, s2, s3 = 0, 1, 2, 3
     # I.states.update([s0, s1, s2, s3])
     # I.actions[s0].add("a"); I.actions[s1].update(["safe", "risky"]); I.actions[s2].add("a"); I.actions[s0].update(["safe"]); I.actions[s3].add("safe")
@@ -319,17 +318,17 @@ if __name__ == "__main__":
 
 
 
-    # w, m, f, t = 0, 1, 2, 3
-    # s0, s1, s2, s3 = 0, 1, 2, 3
-    # I.states.update([s0, s1, s2, s3])
-    # I.actions[s0].add("a"); I.actions[s1].update(["safe", "risky"]); I.actions[s2].add("a"); I.actions[s0].update(["safe"]); I.actions[s3].add("safe")
-    # I.label[s0] = frozenset({"g"}); I.label[s1] = frozenset({"b"}); I.label[s2] = frozenset({"b"}); I.label[s3] = frozenset({"g"})
+    w, m, f, t = 0, 1, 2, 3
+    s0, s1, s2, s3 = 0, 1, 2, 3
+    I.states.update([s0, s1, s2, s3])
+    I.actions[s0].add("a"); I.actions[s1].update(["safe", "risky"]); I.actions[s2].add("a"); I.actions[s0].update(["safe"]); I.actions[s3].add("safe")
+    I.label[s0] = frozenset({"g"}); I.label[s1] = frozenset({"b"}); I.label[s2] = frozenset({"b"}); I.label[s3] = frozenset({"g"})
 
-    # I.intervals[(s0, "a")] = {s0: (0.5, 0.5), s1: (0.5, 0.5)}
-    # I.intervals[(s1, "risky")] = {s2: (0.6, 0.9) , s0: (0.0, 0.4)}
-    # I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
-    # I.intervals[(s0, "safe")]   = {s3: (0.6, 0.8) , s1: (0.0, 0.4)}
-    # I.intervals[(s3, "safe")]   = {s3: (1.0, 1.0)}
+    I.intervals[(s0, "a")] = {s0: (0.5, 0.5), s1: (0.5, 0.5)}
+    I.intervals[(s1, "risky")] = {s2: (0.6, 0.9) , s0: (0.0, 0.4)}
+    I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
+    I.intervals[(s0, "safe")]   = {s3: (0.6, 0.8) , s1: (0.0, 0.4)}
+    I.intervals[(s3, "safe")]   = {s3: (1.0, 1.0)}
 
 
 
