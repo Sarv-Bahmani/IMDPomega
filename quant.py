@@ -240,7 +240,7 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 100):
     L: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
     U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
 
-    for _ in range(max_iter):
+    for iterator in range(max_iter):
         deltaL = 0.0
         deltaU = 0.0
 
@@ -271,7 +271,9 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 100):
             L[x], U[x] = newL, newU
 
         gap = max(U[x] - L[x] for x in P.states) if P.states else 0.0
-        if max(deltaL, deltaU) <= eps and gap <= eps:
+        if max(deltaL, deltaU) <= eps: # and gap <= eps:
+            print("breakkkkkk")
+            print(iterator)
             break
 
     return L, U
@@ -326,7 +328,7 @@ if __name__ == "__main__":
     I.intervals[(s0, "a")] = {s0: (0.5, 0.5), s1: (0.5, 0.5)}
     I.intervals[(s1, "risky")] = {s2: (0.6, 0.9) , s0: (0.0, 0.4)}
     I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
-    I.intervals[(s0, "safe")]   = {s3: (1.0, 1.0)}
+    I.intervals[(s0, "safe")]   = {s3: (0.6, 0.8) , s1: (0.0, 0.4)}
     I.intervals[(s3, "safe")]   = {s3: (1.0, 1.0)}
 
 
