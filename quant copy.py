@@ -147,6 +147,29 @@ class Product:
         self.win_region = self.almost_sure_winning(self.target)
 
 
+    # def build_product(self):
+    #     for s in self.imdp.states:
+    #         for imdp_label_s in self.imdp.label[s]:
+    #             next_qs = self.buchi.step(self.buchi.q0, frozenset({imdp_label_s})) | {self.buchi.q0}
+                
+    #             for q_prime in next_qs:
+    #                 ps = (s, q_prime)
+
+    #                 self.states.add(ps)
+    #                 if q_prime in self.buchi.acc:
+    #                     self.acc_states.add(ps)
+
+    #     list_added = True
+    #     while list_added:
+    #         list_now = list(self.states)
+    #         for (s, q) in list_now:
+    #             self.trans_update(s, q)
+    #         list_after = list(self.states)
+    #         list_after = list(set(list_after) - set(list_now))
+    #         if not list_after:
+    #             list_added = False
+    #         list_now = list_after
+
 
     def build_product(self):
         # Seed product states: start in (s, q0) for all s
@@ -160,7 +183,47 @@ class Product:
         for (s, q) in set(self.states):
             self.trans_update(s, q)
 
-      
+        # for s in self.imdp.states:
+        #     ps = (s, self.buchi.q0)
+        #     self.states.add(ps)
+        #     if self.buchi.q0 in self.buchi.acc:
+        #         self.acc_states.add(ps)
+
+
+
+        # Expand graph until no new states
+        # added = True
+        # while added:
+        #     before = set(self.states)
+        #     for (s, q) in list(before):
+        #         self.trans_update(s, q)
+        #     added = len(self.states) > len(before)
+
+    
+                    
+
+    # def trans_update(self, s, q):
+    #     for a in self.imdp.actions.get(s, ()):
+    #         outs = self.imdp.intervals.get((s, a), {})
+    #         if not outs: continue
+    #         self.actions[(s, q)].add(a)
+    #         prod_outs: Dict[ProdState, Tuple[float, float]] = {}
+    #         for s2, (l, u) in outs.items():
+    #             labset = self.imdp.label.get(s, frozenset())
+    #             for imdp_label_s in labset:
+    #                 next_qs = self.buchi.step(q, imdp_label_s)
+    #                 for q3 in next_qs:
+    #                     ps = (s2, q3)
+    #                     # self.states.add(ps)
+
+    #                     # prod_outs[ps] = prod_outs.get(ps, 0.0) + prob
+    #                     old = prod_outs.get(ps, (0.0, 0.0))
+    #                     prod_outs[ps] = (old[0] + l, old[1] + u)
+
+    #                     if q3 in self.buchi.acc:
+    #                         self.acc_states.add(ps)
+    #         self.trans_prod[((s, q), a)] = prod_outs
+
 
 
     def trans_update(self, s, q):
@@ -184,6 +247,10 @@ class Product:
                     if q3 in self.buchi.acc:
                         self.acc_states.add(ps)
             self.trans_prod[((s, q), a)] = prod_outs
+
+
+
+
 
 
         

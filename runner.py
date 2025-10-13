@@ -133,4 +133,16 @@ if __name__ == "__main__":
 
 
 
-
+    # # AP = set(info.keys())
+    # # AP.update(["reached", "goal", "target", "failed", "deadlock", "unsafe", "bad", "init"])
+    # B = BuchiA(AP)
+    # B.add_state(0, initial=True)  # q0
+    # B.add_state(1, accepting=True)  # q1
+    # # labs = [frozenset({lab}) for lab in AP]
+    # for lab in AP:
+    #     if lab in {"reached","goal","target"}:
+    #         B.add_edge(0, frozenset({lab}), 1)
+    #         B.add_edge(1, frozenset({lab}), 1)
+    #     else:
+    #         B.add_edge(0, frozenset({lab}), 0)
+    #         B.add_edge(1, frozenset({lab}), 1)
