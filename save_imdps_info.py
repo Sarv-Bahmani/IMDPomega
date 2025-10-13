@@ -3,7 +3,7 @@ from pathlib import Path
 import csv, json, datetime, platform, os, sys
 
 COLUMNS = [
-    "address","PRISM Path",
+    "address",
     "Model File","Model Name","timebound",
     "Monte Carlo Iter","x_init","Noise Samples","Confidence",
     "Sample Clustering","Iterations",
@@ -43,13 +43,13 @@ def append_row(csv_path: Path, row: dict):
 
 
 # if __name__ == "__main__":
-address = 'Ab_UAV_10-13-2025_21-20-12'
+address = 'Ab_UAV_10-13-2025_21-31-58'
 run = {
     "address": address,
     "PRISM Path": "/home/sarv/SarvWork/prism/prism/prism/bin/prism",
     "Model File": "JAIR22_models",
     "Model Name": "UAV",
-    "timebound": 8,
+    "timebound": 64,
     "Monte Carlo Iter": 1000,
     "x_init": [-6, 0, -6, 0],
     "Noise Samples": 3200,
@@ -74,16 +74,16 @@ run = {
     "Enabled (init)": 25,
     "Deadlocks": 128,
     "PRISM Ver": "4.8.1",
-    "Property": 'Pmaxmin=? [ F<=4 "reached" ]',
-    "PRISM Iter": 4,
+    "Property": 'Pmaxmin=? [ F<=32 "reached" ]',
+    "PRISM Iter": 32,
     "Range (init states)": [0.0, 1.0],
     "Final Result": [0.0, 1.0],
-    "DefAct (s)": 0.09338760376,
-    "ProbCalc (s)": 2.889494657516,
-    "Export (s)": 2.376542806625,
-    "Build (s)": 1.809,
-    "Check (s)": 0.543,
-    "Total (s)": 5.05219078064,
+    "DefAct (s)": 0.093176841736,
+    "ProbCalc (s)": 2.985431671143,
+    "Export (s)": 1.604939699173,
+    "Build (s)": 0.631,
+    "Check (s)": 1.63,
+    "Total (s)": 3.445927143097,
     "MC Init": 58,
     "MC Summary": "MC 1 run (same init)",
     "Warnings": "Switched to explicit engine; deadlocks fixed in 128 states; total 2 warnings",
