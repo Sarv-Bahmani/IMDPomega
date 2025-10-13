@@ -56,20 +56,18 @@ def load_lab_align(path_lab: str, remap: Dict[int,int]):
     goal: Set[int] = set()
     avoid: Set[int] = set()
     init: Set[int]  = set()
-    others: Set[int] = set()
+    AtomicP: Set[int] = set()
     for s, ns in names_per_state.items():
         L = set(ns)
         label[s] = frozenset(L if L else {})
+        AtomicP.update(lab for lab in L)
         if "reached" in L or "goal" in L or "target" in L:
             goal.add(s)
         if "failed" in L or "deadlock" in L or "unsafe" in L or "bad" in L:
             avoid.add(s)
         if "init" in L:
             init.add(s)
-        for x in L:
-            if x not in {"reached", "goal", "target", "failed", "deadlock", "unsafe", "bad", "init"}:
-                others.add(s)
-    return label, goal, avoid, init, others
+    return label, goal, avoid, init, AtomicP
 
 def load_tra_align(path_tra: str, remap: Dict[int,int]):
     # header: "N  |SA|  |E|" (three integers) – we’ll just read and ignore
@@ -97,9 +95,9 @@ def imdp_from_files_quant(sta_path: str, lab_path: str, tra_path: str, I) -> Dic
     remap, n_states = load_sta_align(sta_path)
     # I.states = set(range(n_states))
     I.states.update([i for i in range(n_states)])
-    I.label, goal, avoid, init, others = load_lab_align(lab_path, remap)
+    I.label, goal, avoid, init, AtomicP = load_lab_align(lab_path, remap)
     I.actions, I.intervals = load_tra_align(tra_path, remap)
-    return {"reached": goal, "avoid": avoid, "init": init}, others
+    return {"reached": goal, "avoid": avoid, "init": init}, AtomicP
 
 
 
@@ -390,7 +388,7 @@ if __name__ == "__main__":
 
     root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/"
 
-    info, others = imdp_from_files_quant(
+    info, AP = imdp_from_files_quant(
         root_adr + "Abstraction_interval.sta",
         root_adr + "Abstraction_interval.lab",
         root_adr + "Abstraction_interval.tra",
@@ -398,7 +396,10 @@ if __name__ == "__main__":
     )
 
 
-    AP = set(info.keys())
+    # AP = set(info.keys())
+
+    # AP.update(["reached", "goal", "target", "failed", "deadlock", "unsafe", "bad", "init"])
+
     B = BuchiA(AP)
     B.add_state(0, initial=True)  # q0
     B.add_state(1, accepting=True)  # q1
@@ -406,12 +407,12 @@ if __name__ == "__main__":
     labs = [frozenset({lab}) for lab in AP]
 
     for lab in AP:
-        if lab =="reached" or lab == 'goal'  or lab =="target":
+        if lab in {"reached","goal","target"}:
             B.add_edge(0, frozenset({lab}), 1)
             B.add_edge(1, frozenset({lab}), 1)
         else:
             B.add_edge(0, frozenset({lab}), 0)
-            B.add_edge(1, frozenset({lab}), 0)
+            B.add_edge(1, frozenset({lab}), 1)
 
 
 
