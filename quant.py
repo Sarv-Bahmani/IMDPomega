@@ -1,8 +1,6 @@
-import json
-from collections import defaultdict, deque
+from collections import defaultdict
 from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
 import re
-
 
 
 State = int
@@ -16,8 +14,6 @@ init_state_str = "init_state"
 actions_str = "actions"
 trans_MDP_str = "trans_MDP"
 underline = "_"
-
-
 
 
 def load_sta_align(path_sta: str):
@@ -285,9 +281,6 @@ class Product:
         return Region
 
 
-
-
-
 def min_expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
     base = 0.0
     residual = 1.0
@@ -365,64 +358,65 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
             print("Converged at iteration", iterator)
             break
 
-    return L, U
+    return L, U, iterator
 
 def quantitative_buchi_imdp(P, eps: float = 1e-10):
-    L, U = interval_iteration(P, P.target, eps=eps)
+    L, U, iterator = interval_iteration(P, P.target, eps=eps)
     return {
         "product": P,
         "AECs": P.aecs,
         "target_union": P.target,
         "L": L,   # minimal (robust) probabilities to satisfy Büchi
-        "U": U,   # maximal (optimistic) probabilities to satisfy Büchi
+        "U": U,   # maximal (optimistic) probabilities to satisfy Büchi,
+        "Convergence_iteration": iterator
     }
 
+def cal_buchi(all_labsets):
+    B = BuchiA({tok for S in all_labsets for tok in S})
+    B.add_state(0, initial=True)
+    B.add_state(1, accepting=True)
+    for labset in all_labsets:
+        if "reached" in labset:
+            B.add_edge(0, labset, 1)
+            B.add_edge(1, labset, 1)
+        else:
+            B.add_edge(0, labset, 0)
+            B.add_edge(1, labset, 1)
+
+    return B
 
 
 
 
-from dataclasses import dataclass, asdict
-from pathlib import Path
-import csv, json, datetime, platform, os, sys
 
+
+sta = "Abstraction_interval.sta"
+lab = "Abstraction_interval.lab"
+tra = "Abstraction_interval.tra"
 
 print("\n=== IMDP demo (L <= U, strict) ===")
 
 
 
-
-
-root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/"
+root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/N=/"
 
 I = IMDP()
 info, AP = imdp_from_files_quant(
-    root_adr + "Abstraction_interval.sta",
-    root_adr + "Abstraction_interval.lab",
-    root_adr + "Abstraction_interval.tra",
+    root_adr + str("Noise Samples") + "_0/" + sta,
+    root_adr + str("Noise Samples") + "_0/" + lab,
+    root_adr + str("Noise Samples") + "_0/" + tra,
     I
-)
-
-
-
+    )
 
 all_labsets = {I.label[s] for s in I.states}  # set of frozensets
-B = BuchiA({tok for S in all_labsets for tok in S})
-B.add_state(0, initial=True)
-B.add_state(1, accepting=True)
-for labset in all_labsets:
-    if "reached" in labset:
-        B.add_edge(0, labset, 1)
-        B.add_edge(1, labset, 1)
-    else:
-        B.add_edge(0, labset, 0)
-        B.add_edge(1, labset, 1)
-
-
-
-
+B = cal_buchi(all_labsets)
 
 P = Product(I, B)
 res = quantitative_buchi_imdp(P, eps=1e-12)
+
+
+
+
 
 L, U = res["L"], res["U"]
 
