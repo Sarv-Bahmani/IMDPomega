@@ -361,7 +361,7 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 1000):
             deltaU = max(deltaU, abs(newU - U[x]))
             L[x], U[x] = newL, newU
 
-        gap = max(U[x] - L[x] for x in P.states) if P.states else 0.0
+        # gap = max(U[x] - L[x] for x in P.states) if P.states else 0.0
         if max(deltaL, deltaU) <= eps: # and gap <= eps:
             print("breakkkkkk")
             print(iterator)
