@@ -288,9 +288,7 @@ class Product:
 
 
 
-# ---------- Interval Expectations (Haddad–Monmege greedy min/max) ----------
 def min_expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
-    # Start at lower bounds
     base = 0.0
     residual = 1.0
     items: List[Tuple[ProdState, float, float, float]] = []  # (y,l,u,V[y])
@@ -298,7 +296,6 @@ def min_expectation_for_action(intervals_list: List[Tuple[ProdState, float, floa
         base += l * V.get(y, 0.0)
         residual -= l
         items.append((y, l, u, V.get(y, 0.0)))
-    # Greedy: push residual to LOWEST V first
     items.sort(key=lambda t: t[3])  # ascending V
     exp = base
     r = max(0.0, residual)
@@ -317,7 +314,6 @@ def max_expectation_for_action(intervals_list: List[Tuple[ProdState, float, floa
         base += l * V.get(y, 0.0)
         residual -= l
         items.append((y, l, u, V.get(y, 0.0)))
-    # Greedy: push residual to HIGHEST V first
     items.sort(key=lambda t: -t[3])  # descending V
     exp = base
     r = max(0.0, residual)
@@ -328,7 +324,6 @@ def max_expectation_for_action(intervals_list: List[Tuple[ProdState, float, floa
         r -= add
     return exp
 
-# ---------- Interval Iteration (returns L, U) ----------
 def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
     L: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
     U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
