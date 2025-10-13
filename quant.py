@@ -379,12 +379,59 @@ def quantitative_buchi_imdp(P, eps: float = 1e-10):
 
 
 
+
+class SampleIMDP:
+    def __init__(self):
+        self.adrs
+        self.n_states
+        self.n_transitions
+        self.n_choices
+
+        self.model_file = 'JAIR22_models'
+        self.model = 'UAV'
+        self.timebound = 32
+        self.abstraction_type = 'default'
+        self.monte_carlo_iter = 1000
+        self.x_init = [-6,  0, -6,  0]
+        self.noise_samples = 3200
+        self.confidence = 1e-08
+        self.sample_clustering = 0.01
+        self.iterations = 1
+        self.nongaussian_noise = False
+        self.prism_java_memory = 8
+        self.improved_synthesis = False
+        self.partition_plot = False
+        self.plot = True
+        self.verbose = False
+        self.drone_spring = False
+        self.drone_par_uncertainty = False
+        self.drone_mc_step = 0.2
+        self.drone_mc_iter = 100
+        self.bld_partition = [25, 35]
+        self.bld_target_size = [[-0.1, 0.1], [-0.3, 0.3]]
+        self.bld_par_uncertainty = False
+        self.drug_partition = [20, 20, 20]
+        self.UAV_dim = 2
+        self.noise_factor = 1
+
+
+
+
+
+
+
 if __name__ == "__main__":
 
     print("\n=== IMDP demo (L <= U, strict) ===")
 
-    I = IMDP()
+
+
     root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/"
+
+
+    examples = {}
+
+    I = IMDP()
     info, AP = imdp_from_files_quant(
         root_adr + "Abstraction_interval.sta",
         root_adr + "Abstraction_interval.lab",
@@ -406,6 +453,7 @@ if __name__ == "__main__":
         else:
             B.add_edge(0, labset, 0)
             B.add_edge(1, labset, 1)
+
 
 
 
