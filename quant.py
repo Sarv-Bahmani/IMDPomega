@@ -1,6 +1,9 @@
 import json
 from collections import defaultdict, deque
 from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
+import re
+
+
 
 State = int
 QState = int
@@ -13,6 +16,88 @@ init_state_str = "init_state"
 actions_str = "actions"
 trans_MDP_str = "trans_MDP"
 underline = "_"
+
+
+
+
+def load_sta_align(path_sta: str):
+    ids: List[int] = []
+    with open(path_sta) as f:
+        _ = f.readline()                    # header like: (x_pos,x_vel,...)
+        for line in f:
+            m = re.match(r'(\d+):', line)
+            if m: ids.append(int(m.group(1)))
+    remap = {sid:i for i,sid in enumerate(sorted(ids))}
+    return remap, len(remap)
+
+def load_lab_align(path_lab: str, remap: Dict[int,int]):
+    # first line: 0="init" 1="deadlock" 2="reached" 3="failed"
+    with open(path_lab) as f:
+        first = f.readline().strip()
+        labmap: Dict[int,str] = {}
+        for tok in first.split():
+            m = re.match(r'(\d+)="([^"]+)"', tok)
+            if m: labmap[int(m.group(1))] = m.group(2).lower()
+
+        names_per_state: Dict[int, Set[str]] = defaultdict(set)
+        for line in f:
+            m = re.match(r'(\d+):\s*(.*)$', line.strip())
+            if not m: continue
+            s_orig = int(m.group(1))
+            s = remap[s_orig]
+            rest = m.group(2).strip()
+            if not rest: continue
+            for tok in rest.split():
+                lid = int(tok)
+                names_per_state[s].add(labmap.get(lid, ""))
+
+    # Build FrozenSet labels for your IMDP
+    label: Dict[int, FrozenSet[str]] = {}
+    goal: Set[int] = set()
+    avoid: Set[int] = set()
+    init: Set[int]  = set()
+    for s, ns in names_per_state.items():
+        L = set(ns)
+        label[s] = frozenset(L if L else {})
+        if "reached" in L or "goal" in L or "target" in L:
+            goal.add(s)
+        if "failed" in L or "deadlock" in L or "unsafe" in L or "bad" in L:
+            avoid.add(s)
+        if "init" in L:
+            init.add(s)
+    return label, goal, avoid, init
+
+def load_tra_align(path_tra: str, remap: Dict[int,int]):
+    # header: "N  |SA|  |E|" (three integers) – we’ll just read and ignore
+    with open(path_tra) as f:
+        _ = f.readline()
+        pat = re.compile(r'(\d+)\s+(\d+)\s+(\d+)\s*\[\s*([0-9.eE+\-]+)\s*,\s*([0-9.eE+\-]+)\s*\]')
+        trans = defaultdict(dict)     # (s,a) -> {s':(l,u)}
+        actions = defaultdict(set)    # s -> {a}
+        for raw in f:
+            line = raw.strip()
+            if not line: continue
+            m = pat.match(line)
+            if not m:
+                raise ValueError(f"Bad .tra line: {line[:120]}")
+            s0, a, s1 = int(m.group(1)), str(int(m.group(2))), int(m.group(3))
+            l, u = float(m.group(4)), float(m.group(5))
+            s  = remap[s0]
+            sp = remap[s1]
+            actions[s].add(a)
+            trans[(s, a)][sp] = (l, u)
+    return actions, trans
+
+def imdp_from_files_quant(sta_path: str, lab_path: str, tra_path: str, I) -> Dict[str, Set[int]]:
+    # I is an instance of your IMDP() class from quant (1).py
+    remap, n_states = load_sta_align(sta_path)
+    # I.states = set(range(n_states))
+    I.states.update([i for i in range(n_states)])
+    I.label, goal, avoid, init = load_lab_align(lab_path, remap)
+    I.actions, I.intervals = load_tra_align(tra_path, remap)
+    return {"goal": goal, "avoid": avoid, "init": init}
+
+
 
 class IMDP:
     def __init__(self): #, filename):
@@ -294,41 +379,15 @@ if __name__ == "__main__":
 
     print("\n=== IMDP demo (L <= U, strict) ===")
     I = IMDP()
-    # s0, s1, s2 = 0, 1, 2
-    # I.states.update([s0, s1, s2])
-    # I.actions[s0].add("a"); I.actions[s1].update(["safe", "risky"]); I.actions[s2].add("a")
-    # I.label[s0] = frozenset({"g"}); I.label[s1] = frozenset({"b"}); I.label[s2] = frozenset({"b"})
 
-    # I.intervals[(s0, "a")] = {s0: (0.5, 0.5), s1: (0.5, 0.5)}
-    # I.intervals[(s1, "safe")]  = {s0: (1.0, 1.0)}
-    # I.intervals[(s1, "risky")] = {s2: (0.6, 1.0) , s0: (0.0, 0.4)}
-    # I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
+    root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/"
 
-    # s0, s1, s2, s3 = 0, 1, 2, 3
-    # I.states.update([s0, s1, s2, s3])
-    # I.actions[s0].add("a"); I.actions[s1].update(["safe", "risky"]); I.actions[s2].add("a"); I.actions[s0].update(["safe"]); I.actions[s3].add("safe")
-    # I.label[s0] = frozenset({"g"}); I.label[s1] = frozenset({"b"}); I.label[s2] = frozenset({"b"}); I.label[s3] = frozenset({"g"})
-
-    # I.intervals[(s0, "a")] = {s0: (0.5, 0.5), s1: (0.5, 0.5)}
-    # I.intervals[(s1, "safe")]  = {s0: (1.0, 1.0)}
-    # I.intervals[(s1, "risky")] = {s2: (0.6, 1.0) , s0: (0.0, 0.4)}
-    # I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
-    # I.intervals[(s0, "safe")]   = {s3: (1.0, 1.0)}
-    # I.intervals[(s3, "safe")]   = {s3: (1.0, 1.0)}
-
-
-
-    w, m, f, t = 0, 1, 2, 3
-    s0, s1, s2, s3 = 0, 1, 2, 3
-    I.states.update([s0, s1, s2, s3])
-    I.actions[s0].add("a"); I.actions[s1].update(["safe", "risky"]); I.actions[s2].add("a"); I.actions[s0].update(["safe"]); I.actions[s3].add("safe")
-    I.label[s0] = frozenset({"g"}); I.label[s1] = frozenset({"b"}); I.label[s2] = frozenset({"b"}); I.label[s3] = frozenset({"g"})
-
-    I.intervals[(s0, "a")] = {s0: (0.5, 0.5), s1: (0.5, 0.5)}
-    I.intervals[(s1, "risky")] = {s2: (0.6, 0.9) , s0: (0.0, 0.4)}
-    I.intervals[(s2, "a")] = {s2: (1.0, 1.0)}
-    I.intervals[(s0, "safe")]   = {s3: (0.6, 0.8) , s1: (0.0, 0.4)}
-    I.intervals[(s3, "safe")]   = {s3: (1.0, 1.0)}
+    info = imdp_from_files_quant(
+        root_adr + "Abstraction_interval.sta",
+        root_adr + "Abstraction_interval.lab",
+        root_adr + "Abstraction_interval.tra",
+        I
+    )
 
 
 
@@ -345,6 +404,10 @@ if __name__ == "__main__":
         else:
             B.add_edge(0, lab, 0)
             B.add_edge(1, lab, 0)
+
+
+
+
 
     P = Product(I, B)
     res = quantitative_buchi_imdp(P, eps=1e-12)

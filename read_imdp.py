@@ -112,7 +112,7 @@ def load_tra_intervals(path_tra: str, remap: Dict[int,int]) -> Tuple[Dict[Tuple[
             if not m:
                 raise ValueError(f"Bad transition line (expect 's a s' [l,u]'): {line[:120]}")
             s_orig = int(m.group(1))
-            a = int(m.group(2))
+            a = str(int(m.group(2)))
             sp_orig = int(m.group(3))
             l = float(m.group(4))
             u = float(m.group(5))
