@@ -56,6 +56,7 @@ def load_lab_align(path_lab: str, remap: Dict[int,int]):
     goal: Set[int] = set()
     avoid: Set[int] = set()
     init: Set[int]  = set()
+    others: Set[int] = set()
     for s, ns in names_per_state.items():
         L = set(ns)
         label[s] = frozenset(L if L else {})
@@ -65,7 +66,10 @@ def load_lab_align(path_lab: str, remap: Dict[int,int]):
             avoid.add(s)
         if "init" in L:
             init.add(s)
-    return label, goal, avoid, init
+        for x in L:
+            if x not in {"reached", "goal", "target", "failed", "deadlock", "unsafe", "bad", "init"}:
+                others.add(s)
+    return label, goal, avoid, init, others
 
 def load_tra_align(path_tra: str, remap: Dict[int,int]):
     # header: "N  |SA|  |E|" (three integers) – we’ll just read and ignore
@@ -93,9 +97,9 @@ def imdp_from_files_quant(sta_path: str, lab_path: str, tra_path: str, I) -> Dic
     remap, n_states = load_sta_align(sta_path)
     # I.states = set(range(n_states))
     I.states.update([i for i in range(n_states)])
-    I.label, goal, avoid, init = load_lab_align(lab_path, remap)
+    I.label, goal, avoid, init, others = load_lab_align(lab_path, remap)
     I.actions, I.intervals = load_tra_align(tra_path, remap)
-    return {"goal": goal, "avoid": avoid, "init": init}
+    return {"reached": goal, "avoid": avoid, "init": init}, others
 
 
 
@@ -150,6 +154,10 @@ class Product:
             next_qs = self.buchi.step(self.buchi.q0, self.imdp.label[s]) | {self.buchi.q0}
             for q_prime in next_qs:
                 ps = (s, q_prime)
+
+                if q_prime == 1:
+                    print("1 is reached")
+                
                 self.states.add(ps)
                 if q_prime in self.buchi.acc:
                     self.acc_states.add(ps)
@@ -162,6 +170,8 @@ class Product:
             self.trans_update(s, q)
 
     def trans_update(self, s, q):
+        if q == 1:
+            print("1 is reached")
         for a in self.imdp.actions.get(s, ()):
             outs = self.imdp.intervals.get((s, a), {})
             if not outs: continue
@@ -178,6 +188,8 @@ class Product:
 
                     if q3 in self.buchi.acc:
                         self.acc_states.add(ps)
+                        if q3 == 1:
+                            print("1 is reached")
             self.trans_prod[((s, q), a)] = prod_outs
 
     def prod_graph(self):
@@ -321,7 +333,7 @@ def max_expectation_for_action(intervals_list: List[Tuple[ProdState, float, floa
     return exp
 
 # ---------- Interval Iteration (returns L, U) ----------
-def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 100):
+def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 1000):
     L: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
     U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
 
@@ -382,7 +394,7 @@ if __name__ == "__main__":
 
     root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/"
 
-    info = imdp_from_files_quant(
+    info, others = imdp_from_files_quant(
         root_adr + "Abstraction_interval.sta",
         root_adr + "Abstraction_interval.lab",
         root_adr + "Abstraction_interval.tra",
@@ -390,22 +402,20 @@ if __name__ == "__main__":
     )
 
 
-
-
-    AP = {"g", "b"}
+    AP = set(info.keys())
     B = BuchiA(AP)
-    B.add_state(0, initial=True, accepting=False)  # q0
+    B.add_state(0, initial=True)  # q0
     B.add_state(1, accepting=True)  # q1
+
     labs = [frozenset({lab}) for lab in AP]
-    for lab in labs:
-        if "g" in lab:
-            B.add_edge(0, lab, 1)
-            B.add_edge(1, lab, 1)
+
+    for lab in AP:
+        if lab =="reached" or lab == 'goal'  or lab =="target":
+            B.add_edge(0, frozenset({lab}), 1)
+            B.add_edge(1, frozenset({lab}), 1)
         else:
-            B.add_edge(0, lab, 0)
-            B.add_edge(1, lab, 0)
-
-
+            B.add_edge(0, frozenset({lab}), 0)
+            B.add_edge(1, frozenset({lab}), 0)
 
 
 
