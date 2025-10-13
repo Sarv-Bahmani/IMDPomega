@@ -151,16 +151,15 @@ class Product:
 
     def build_product(self):
         for s in self.imdp.states:
-            next_qs = self.buchi.step(self.buchi.q0, self.imdp.label[s]) | {self.buchi.q0}
-            for q_prime in next_qs:
-                ps = (s, q_prime)
-
-                if q_prime == 1:
-                    print("1 is reached")
+            for imdp_label_s in self.imdp.label[s]:
+                next_qs = self.buchi.step(self.buchi.q0, frozenset({imdp_label_s})) | {self.buchi.q0}
                 
-                self.states.add(ps)
-                if q_prime in self.buchi.acc:
-                    self.acc_states.add(ps)
+                for q_prime in next_qs:
+                    ps = (s, q_prime)
+
+                    self.states.add(ps)
+                    if q_prime in self.buchi.acc:
+                        self.acc_states.add(ps)
         list_now = list(self.states)
         for (s, q) in list_now:
             self.trans_update(s, q)
@@ -170,26 +169,23 @@ class Product:
             self.trans_update(s, q)
 
     def trans_update(self, s, q):
-        if q == 1:
-            print("1 is reached")
         for a in self.imdp.actions.get(s, ()):
             outs = self.imdp.intervals.get((s, a), {})
             if not outs: continue
             self.actions[(s, q)].add(a)
             prod_outs: Dict[ProdState, Tuple[float, float]] = {}
             for s2, (l, u) in outs.items():
-                for q3 in (self.buchi.step(q, self.imdp.label[s]) or {q}):
-                    ps = (s2, q3)
-                    self.states.add(ps)
+                for imdp_label_s in self.imdp.label[s]:
+                    for q3 in (self.buchi.step(q,  frozenset({imdp_label_s})) or {q}):
+                        ps = (s2, q3)
+                        self.states.add(ps)
 
-                    # prod_outs[ps] = prod_outs.get(ps, 0.0) + prob
-                    old = prod_outs.get(ps, (0.0, 0.0))
-                    prod_outs[ps] = (old[0] + l, old[1] + u)
+                        # prod_outs[ps] = prod_outs.get(ps, 0.0) + prob
+                        old = prod_outs.get(ps, (0.0, 0.0))
+                        prod_outs[ps] = (old[0] + l, old[1] + u)
 
-                    if q3 in self.buchi.acc:
-                        self.acc_states.add(ps)
-                        if q3 == 1:
-                            print("1 is reached")
+                        if q3 in self.buchi.acc:
+                            self.acc_states.add(ps)
             self.trans_prod[((s, q), a)] = prod_outs
 
     def prod_graph(self):
