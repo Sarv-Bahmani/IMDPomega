@@ -4,20 +4,23 @@ from pathlib import Path
 import csv, json, datetime, platform, os, sys
 
 COLUMNS = [
-    "Run ID","Date/Time","Model File","Model Name","mdp_mode","UAV_dim","Command Used",
-    "PRISM Path","PRISM Ver","Python Ver","OS","Conda Env","Noise Samples","Confidence",
-    "Sample Clustering","Iterations","Monte Carlo Iter","Noise Factor","Partition",
+    "address","PRISM Path",
+    "Model File","Model Name","timebound",
+    "Monte Carlo Iter","x_init","Noise Samples","Confidence",
+    "Sample Clustering","Iterations",
+    "drone_mc_step","drone_mc_iter",
+    "bld_partition","bld_target_size","bld_par_uncertainty",
+    "drug_partition","UAV_dim","noise_factor",
     "Regions (base)","Exported States (PRISM)","Choices","Transitions",
-    "Enabled (total)","Enabled (init)","Deadlocks","Property","PRISM Iter",
-    "Range (init states)","Final Result","DefAct (s)","ProbCalc (s)","Export (s)",
-    "Build (s)","Check (s)","Total (s)","MC Init","MC Summary","Plots","Warnings","Notes"
+    "Noise Factor",
+    "Partition","Enabled (total)","Enabled (init)","Deadlocks",
+    "PRISM Ver",
+    "Property","PRISM Iter","Range (init states)","Final Result",
+    "DefAct (s)","ProbCalc (s)","Export (s)","Build (s)","Check (s)","Total (s)",
+    "MC Init","MC Summary","Warnings","Python Ver","OS","Conda Env"
 ]
 
-def _now():
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-def _run_id(prefix="Ab"):
-    return f"{prefix}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
 
 def _default_env():
     return {
@@ -39,18 +42,11 @@ def append_row(csv_path: Path, row: dict):
     with csv_path.open("a", newline="") as f:
         csv.DictWriter(f, fieldnames=COLUMNS).writerow(clean)
 
-def write_json(folder: Path, run_id: str, payload: dict):
-    folder.mkdir(parents=True, exist_ok=True)
-    with (folder / f"{run_id}.json").open("w") as f:
-        json.dump(payload, f, indent=2)
-
-
-
 
 if __name__ == "__main__":
     address = 'Ab_UAV_10-13-2025_17-06-26'
     run = {
-        "Run ID": address,
+        "address": address,
         "PRISM Path": "/home/sarv/SarvWork/prism/prism/prism/bin/prism",
         "Model File": "JAIR22_models",
         "Model Name": "UAV",
@@ -79,7 +75,6 @@ if __name__ == "__main__":
         "Enabled (init)": 25,
         "Deadlocks": 128,
         "PRISM Ver": "4.8.1",
-        **_default_env(),
         "Property": 'Pmaxmin=? [ F<=16 "reached" ]',
         "PRISM Iter": 16,
         "Range (init states)": [0.0,1.0],
@@ -93,6 +88,7 @@ if __name__ == "__main__":
         "MC Init": 58,
         "MC Summary": "MC 1 run (same init)",
         "Warnings": "Deadlocks fixed in 128 states; total 2 warnings",
+        **_default_env(),
     }
 
     csv_path = Path("output/IMDP_Experiments.csv")
