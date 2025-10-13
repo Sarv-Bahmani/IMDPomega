@@ -174,18 +174,30 @@ class Product:
     def build_product(self):
         # Seed product states: start in (s, q0) for all s
         for s in self.imdp.states:
-            ps = (s, self.buchi.q0)
-            self.states.add(ps)
-            if self.buchi.q0 in self.buchi.acc:
-                self.acc_states.add(ps)
+            for q in self.buchi.Q:
+                ps = (s, q)
+                self.states.add(ps)
+                if q in self.buchi.acc:
+                    self.acc_states.add(ps)
+
+        for (s, q) in set(self.states):
+            self.trans_update(s, q)
+
+        # for s in self.imdp.states:
+        #     ps = (s, self.buchi.q0)
+        #     self.states.add(ps)
+        #     if self.buchi.q0 in self.buchi.acc:
+        #         self.acc_states.add(ps)
+
+
 
         # Expand graph until no new states
-        added = True
-        while added:
-            before = set(self.states)
-            for (s, q) in list(before):
-                self.trans_update(s, q)
-            added = len(self.states) > len(before)
+        # added = True
+        # while added:
+        #     before = set(self.states)
+        #     for (s, q) in list(before):
+        #         self.trans_update(s, q)
+        #     added = len(self.states) > len(before)
 
     
                     
@@ -220,7 +232,7 @@ class Product:
             self.actions[(s, q)].add(a)
             prod_outs = {}
             for s2, (l, u) in outs.items():
-                labset = self.imdp.label.get(s2, frozenset())
+                labset = self.imdp.label.get(s, frozenset())
                 next_qs = self.buchi.step(q, labset)
                 if not next_qs:
                     # if your Büchi is total on labset, this won’t happen
@@ -387,7 +399,7 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
     U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
 
     for iterator in range(max_iter):
-        if iterator % 100 == 0: print("Iteration", iterator)
+        if iterator % 10 == 0: print("Iteration", iterator)
         deltaL = 0.0
         deltaU = 0.0
 
