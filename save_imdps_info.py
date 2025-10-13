@@ -1,4 +1,3 @@
-# log_imdp.py
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import csv, json, datetime, platform, os, sys
