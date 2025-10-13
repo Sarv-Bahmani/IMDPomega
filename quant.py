@@ -387,8 +387,8 @@ def quantitative_buchi_imdp(P, eps: float = 1e-10):
 if __name__ == "__main__":
 
     print("\n=== IMDP demo (L <= U, strict) ===")
-    I = IMDP()
 
+    I = IMDP()
     root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/"
     info, AP = imdp_from_files_quant(
         root_adr + "Abstraction_interval.sta",
@@ -396,6 +396,8 @@ if __name__ == "__main__":
         root_adr + "Abstraction_interval.tra",
         I
     )
+
+
 
 
     all_labsets = {I.label[s] for s in I.states}  # set of frozensets
@@ -415,8 +417,8 @@ if __name__ == "__main__":
 
     P = Product(I, B)
     res = quantitative_buchi_imdp(P, eps=1e-12)
-    L, U = res["L"], res["U"]
 
+    L, U = res["L"], res["U"]
 
     proj_L = defaultdict(float); proj_U = defaultdict(float)
     for (s, q), v in L.items(): proj_L[s] = max(proj_L[s], v)
