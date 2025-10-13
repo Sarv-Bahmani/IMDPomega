@@ -380,109 +380,15 @@ def quantitative_buchi_imdp(P, eps: float = 1e-10):
 
 
 
-class SampleIMDP:
-    def __init__(self):
-        self.adrs
-        self.n_states
-        self.n_transitions
-        self.n_choices
-
-        self.model_file = 'JAIR22_models'
-        self.model = 'UAV'
-        self.timebound = 32
-        self.abstraction_type = 'default'
-        self.monte_carlo_iter = 1000
-        self.x_init = [-6,  0, -6,  0]
-        self.noise_samples = 3200
-        self.confidence = 1e-08
-        self.sample_clustering = 0.01
-        self.iterations = 1
-        self.nongaussian_noise = False
-        self.prism_java_memory = 8
-        self.improved_synthesis = False
-        self.partition_plot = False
-        self.plot = True
-        self.verbose = False
-        self.drone_spring = False
-        self.drone_par_uncertainty = False
-        self.drone_mc_step = 0.2
-        self.drone_mc_iter = 100
-        self.bld_partition = [25, 35]
-        self.bld_target_size = [[-0.1, 0.1], [-0.3, 0.3]]
-        self.bld_par_uncertainty = False
-        self.drug_partition = [20, 20, 20]
-        self.UAV_dim = 2
-        self.noise_factor = 1
-
-
-
 
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import csv, json, datetime, platform, os, sys
 
-COLUMNS = [
-    "Run ID","Date/Time","Model File","Model Name","mdp_mode","UAV_dim","Command Used",
-    "PRISM Path","PRISM Ver","Python Ver","OS","Conda Env","Noise Samples","Confidence",
-    "Sample Clustering","Iterations","Monte Carlo Iter","Noise Factor","Partition",
-    "Regions (base)","Exported States (PRISM)","Choices","Transitions",
-    "Enabled (total)","Enabled (init)","Deadlocks","Property","PRISM Iter",
-    "Range (init states)","Final Result","DefAct (s)","ProbCalc (s)","Export (s)",
-    "Build (s)","Check (s)","Total (s)","MC Init","MC Summary","Plots","Warnings","Notes"
-]
-
-def _now():
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-def _run_id(prefix="Ab"):
-    return f"{prefix}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
-
-def _default_env():
-    return {
-        "Python Ver": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-        "OS": platform.system(),
-        "Conda Env": os.environ.get("CONDA_DEFAULT_ENV",""),
-    }
-
-def ensure_csv(csv_path: Path):
-    csv_path.parent.mkdir(parents=True, exist_ok=True)
-    if not csv_path.exists():
-        with csv_path.open("w", newline="") as f:
-            csv.DictWriter(f, fieldnames=COLUMNS).writeheader()
-
-def append_row(csv_path: Path, row: dict):
-    ensure_csv(csv_path)
-    # keep only known columns; missing keys become ""
-    clean = {k: row.get(k, "") for k in COLUMNS}
-    with csv_path.open("a", newline="") as f:
-        csv.DictWriter(f, fieldnames=COLUMNS).writerow(clean)
-
-def write_json(folder: Path, run_id: str, payload: dict):
-    folder.mkdir(parents=True, exist_ok=True)
-    with (folder / f"{run_id}.json").open("w") as f:
-        json.dump(payload, f, indent=2)
-
-
-
-
-
-
-
-
-
-
-
-print(f"Logged {run['Run ID']} to {csv_path}.")
-
-
-
-
-
-
-
-# if __name__ == "__main__":
 
 print("\n=== IMDP demo (L <= U, strict) ===")
+
+
 
 
 

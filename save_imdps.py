@@ -91,8 +91,11 @@ if __name__ == "__main__":
         **_default_env(),
     }
 
-    csv_path = Path("output/IMDP_Experiments.csv")
+    csv_path = Path("gen_imdp_info/IMDPs_info.csv")
     append_row(csv_path, run)
+
+
+
 
 
 
