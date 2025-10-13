@@ -417,54 +417,111 @@ class SampleIMDP:
 
 
 
+from dataclasses import dataclass, asdict
+from pathlib import Path
+import csv, json, datetime, platform, os, sys
+
+COLUMNS = [
+    "Run ID","Date/Time","Model File","Model Name","mdp_mode","UAV_dim","Command Used",
+    "PRISM Path","PRISM Ver","Python Ver","OS","Conda Env","Noise Samples","Confidence",
+    "Sample Clustering","Iterations","Monte Carlo Iter","Noise Factor","Partition",
+    "Regions (base)","Exported States (PRISM)","Choices","Transitions",
+    "Enabled (total)","Enabled (init)","Deadlocks","Property","PRISM Iter",
+    "Range (init states)","Final Result","DefAct (s)","ProbCalc (s)","Export (s)",
+    "Build (s)","Check (s)","Total (s)","MC Init","MC Summary","Plots","Warnings","Notes"
+]
+
+def _now():
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+def _run_id(prefix="Ab"):
+    return f"{prefix}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+
+def _default_env():
+    return {
+        "Python Ver": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+        "OS": platform.system(),
+        "Conda Env": os.environ.get("CONDA_DEFAULT_ENV",""),
+    }
+
+def ensure_csv(csv_path: Path):
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    if not csv_path.exists():
+        with csv_path.open("w", newline="") as f:
+            csv.DictWriter(f, fieldnames=COLUMNS).writeheader()
+
+def append_row(csv_path: Path, row: dict):
+    ensure_csv(csv_path)
+    # keep only known columns; missing keys become ""
+    clean = {k: row.get(k, "") for k in COLUMNS}
+    with csv_path.open("a", newline="") as f:
+        csv.DictWriter(f, fieldnames=COLUMNS).writerow(clean)
+
+def write_json(folder: Path, run_id: str, payload: dict):
+    folder.mkdir(parents=True, exist_ok=True)
+    with (folder / f"{run_id}.json").open("w") as f:
+        json.dump(payload, f, indent=2)
 
 
 
-if __name__ == "__main__":
-
-    print("\n=== IMDP demo (L <= U, strict) ===")
-
-
-
-    root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/"
-
-
-    examples = {}
-
-    I = IMDP()
-    info, AP = imdp_from_files_quant(
-        root_adr + "Abstraction_interval.sta",
-        root_adr + "Abstraction_interval.lab",
-        root_adr + "Abstraction_interval.tra",
-        I
-    )
-
-
-
-
-    all_labsets = {I.label[s] for s in I.states}  # set of frozensets
-    B = BuchiA({tok for S in all_labsets for tok in S})
-    B.add_state(0, initial=True)
-    B.add_state(1, accepting=True)
-    for labset in all_labsets:
-        if "reached" in labset:
-            B.add_edge(0, labset, 1)
-            B.add_edge(1, labset, 1)
-        else:
-            B.add_edge(0, labset, 0)
-            B.add_edge(1, labset, 1)
 
 
 
 
 
-    P = Product(I, B)
-    res = quantitative_buchi_imdp(P, eps=1e-12)
 
-    L, U = res["L"], res["U"]
 
-    proj_L = defaultdict(float); proj_U = defaultdict(float)
-    for (s, q), v in L.items(): proj_L[s] = max(proj_L[s], v)
-    for (s, q), v in U.items(): proj_U[s] = max(proj_U[s], v)
-    print("L (min probs) by base state:", dict(proj_L))
-    print("U (max probs) by base state:", dict(proj_U))
+
+print(f"Logged {run['Run ID']} to {csv_path}.")
+
+
+
+
+
+
+
+# if __name__ == "__main__":
+
+print("\n=== IMDP demo (L <= U, strict) ===")
+
+
+
+root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/"
+
+I = IMDP()
+info, AP = imdp_from_files_quant(
+    root_adr + "Abstraction_interval.sta",
+    root_adr + "Abstraction_interval.lab",
+    root_adr + "Abstraction_interval.tra",
+    I
+)
+
+
+
+
+all_labsets = {I.label[s] for s in I.states}  # set of frozensets
+B = BuchiA({tok for S in all_labsets for tok in S})
+B.add_state(0, initial=True)
+B.add_state(1, accepting=True)
+for labset in all_labsets:
+    if "reached" in labset:
+        B.add_edge(0, labset, 1)
+        B.add_edge(1, labset, 1)
+    else:
+        B.add_edge(0, labset, 0)
+        B.add_edge(1, labset, 1)
+
+
+
+
+
+P = Product(I, B)
+res = quantitative_buchi_imdp(P, eps=1e-12)
+
+L, U = res["L"], res["U"]
+
+proj_L = defaultdict(float); proj_U = defaultdict(float)
+for (s, q), v in L.items(): proj_L[s] = max(proj_L[s], v)
+for (s, q), v in U.items(): proj_U[s] = max(proj_U[s], v)
+print("L (min probs) by base state:", dict(proj_L))
+print("U (max probs) by base state:", dict(proj_U))
