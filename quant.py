@@ -184,7 +184,7 @@ class Product:
             self.actions[(s, q)].add(a)
             prod_outs: Dict[ProdState, Tuple[float, float]] = {}
             for s2, (l, u) in outs.items():
-                for imdp_label_s in self.imdp.label[s]:
+                for imdp_label_s in self.imdp.label[s2]:
                     for q3 in (self.buchi.step(q, frozenset({imdp_label_s})) | {q}):
                         ps = (s2, q3)
                         self.states.add(ps)
