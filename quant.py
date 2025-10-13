@@ -209,10 +209,12 @@ class Product:
     #         self.actions[(s, q)].add(a)
     #         prod_outs: Dict[ProdState, Tuple[float, float]] = {}
     #         for s2, (l, u) in outs.items():
-    #             for imdp_label_s in self.imdp.label.get(s2, frozenset()):
-    #                 for q3 in (self.buchi.step(q, frozenset({imdp_label_s})) | {q}):
+    #             labset = self.imdp.label.get(s, frozenset())
+    #             for imdp_label_s in labset:
+    #                 next_qs = self.buchi.step(q, imdp_label_s)
+    #                 for q3 in next_qs:
     #                     ps = (s2, q3)
-    #                     self.states.add(ps)
+    #                     # self.states.add(ps)
 
     #                     # prod_outs[ps] = prod_outs.get(ps, 0.0) + prob
     #                     old = prod_outs.get(ps, (0.0, 0.0))
@@ -239,7 +241,7 @@ class Product:
                     continue
                 for q3 in next_qs:
                     ps = (s2, q3)
-                    self.states.add(ps)
+                    # self.states.add(ps)
                     old = prod_outs.get(ps, (0.0, 0.0))
                     prod_outs[ps] = (old[0] + l, old[1] + u)
                     if q3 in self.buchi.acc:
