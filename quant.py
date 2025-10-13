@@ -158,13 +158,24 @@ class Product:
                     self.states.add(ps)
                     if q_prime in self.buchi.acc:
                         self.acc_states.add(ps)
-        list_now = list(self.states)
-        for (s, q) in list_now:
-            self.trans_update(s, q)
-        list_after = list(self.states)
-        list_after = list(set(list_after) - set(list_now))
-        for (s, q) in list_after:
-            self.trans_update(s, q)
+        # list_now = list(self.states)
+        # for (s, q) in list_now:
+        #     self.trans_update(s, q)
+        # list_after = list(self.states)
+        # list_after = list(set(list_after) - set(list_now))
+
+
+        list_added = True
+        while list_added:
+            list_now = list(self.states)
+            for (s, q) in list_now:
+                self.trans_update(s, q)
+            list_after = list(self.states)
+            list_after = list(set(list_after) - set(list_now))
+            if not list_after:
+                list_added = False
+            list_now = list_after
+                    
 
     def trans_update(self, s, q):
         for a in self.imdp.actions.get(s, ()):
@@ -174,7 +185,7 @@ class Product:
             prod_outs: Dict[ProdState, Tuple[float, float]] = {}
             for s2, (l, u) in outs.items():
                 for imdp_label_s in self.imdp.label[s]:
-                    for q3 in (self.buchi.step(q,  frozenset({imdp_label_s})) or {q}):
+                    for q3 in (self.buchi.step(q, frozenset({imdp_label_s})) | {q}):
                         ps = (s2, q3)
                         self.states.add(ps)
 
@@ -185,6 +196,11 @@ class Product:
                         if q3 in self.buchi.acc:
                             self.acc_states.add(ps)
             self.trans_prod[((s, q), a)] = prod_outs
+
+
+
+
+        
 
     def prod_graph(self):
         for (ps, a), outs in self.trans_prod.items():
@@ -387,7 +403,6 @@ if __name__ == "__main__":
     I = IMDP()
 
     root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/"
-
     info, AP = imdp_from_files_quant(
         root_adr + "Abstraction_interval.sta",
         root_adr + "Abstraction_interval.lab",
@@ -396,24 +411,33 @@ if __name__ == "__main__":
     )
 
 
-    # AP = set(info.keys())
+    # # AP = set(info.keys())
+    # # AP.update(["reached", "goal", "target", "failed", "deadlock", "unsafe", "bad", "init"])
+    # B = BuchiA(AP)
+    # B.add_state(0, initial=True)  # q0
+    # B.add_state(1, accepting=True)  # q1
+    # # labs = [frozenset({lab}) for lab in AP]
+    # for lab in AP:
+    #     if lab in {"reached","goal","target"}:
+    #         B.add_edge(0, frozenset({lab}), 1)
+    #         B.add_edge(1, frozenset({lab}), 1)
+    #     else:
+    #         B.add_edge(0, frozenset({lab}), 0)
+    #         B.add_edge(1, frozenset({lab}), 1)
 
-    # AP.update(["reached", "goal", "target", "failed", "deadlock", "unsafe", "bad", "init"])
 
-    B = BuchiA(AP)
-    B.add_state(0, initial=True)  # q0
-    B.add_state(1, accepting=True)  # q1
 
-    labs = [frozenset({lab}) for lab in AP]
-
-    for lab in AP:
-        if lab in {"reached","goal","target"}:
-            B.add_edge(0, frozenset({lab}), 1)
-            B.add_edge(1, frozenset({lab}), 1)
+    all_labsets = {I.label[s] for s in I.states}  # set of frozensets
+    B = BuchiA({tok for S in all_labsets for tok in S})
+    B.add_state(0, initial=True)
+    B.add_state(1, accepting=True)
+    for labset in all_labsets:
+        if "reached" in labset:
+            B.add_edge(0, labset, 1)
+            B.add_edge(1, labset, 1)
         else:
-            B.add_edge(0, frozenset({lab}), 0)
-            B.add_edge(1, frozenset({lab}), 1)
-
+            B.add_edge(0, labset, 0)
+            B.add_edge(1, labset, 1)
 
 
     P = Product(I, B)
