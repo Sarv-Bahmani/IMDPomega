@@ -147,55 +147,94 @@ class Product:
         self.win_region = self.almost_sure_winning(self.target)
 
 
-    def build_product(self):
-        for s in self.imdp.states:
-            for imdp_label_s in self.imdp.label[s]:
-                next_qs = self.buchi.step(self.buchi.q0, frozenset({imdp_label_s})) | {self.buchi.q0}
+    # def build_product(self):
+    #     for s in self.imdp.states:
+    #         for imdp_label_s in self.imdp.label[s]:
+    #             next_qs = self.buchi.step(self.buchi.q0, frozenset({imdp_label_s})) | {self.buchi.q0}
                 
-                for q_prime in next_qs:
-                    ps = (s, q_prime)
+    #             for q_prime in next_qs:
+    #                 ps = (s, q_prime)
 
-                    self.states.add(ps)
-                    if q_prime in self.buchi.acc:
-                        self.acc_states.add(ps)
-        # list_now = list(self.states)
-        # for (s, q) in list_now:
-        #     self.trans_update(s, q)
-        # list_after = list(self.states)
-        # list_after = list(set(list_after) - set(list_now))
+    #                 self.states.add(ps)
+    #                 if q_prime in self.buchi.acc:
+    #                     self.acc_states.add(ps)
+
+    #     list_added = True
+    #     while list_added:
+    #         list_now = list(self.states)
+    #         for (s, q) in list_now:
+    #             self.trans_update(s, q)
+    #         list_after = list(self.states)
+    #         list_after = list(set(list_after) - set(list_now))
+    #         if not list_after:
+    #             list_added = False
+    #         list_now = list_after
 
 
-        list_added = True
-        while list_added:
-            list_now = list(self.states)
-            for (s, q) in list_now:
+    def build_product(self):
+        # Seed product states: start in (s, q0) for all s
+        for s in self.imdp.states:
+            ps = (s, self.buchi.q0)
+            self.states.add(ps)
+            if self.buchi.q0 in self.buchi.acc:
+                self.acc_states.add(ps)
+
+        # Expand graph until no new states
+        added = True
+        while added:
+            before = set(self.states)
+            for (s, q) in list(before):
                 self.trans_update(s, q)
-            list_after = list(self.states)
-            list_after = list(set(list_after) - set(list_now))
-            if not list_after:
-                list_added = False
-            list_now = list_after
+            added = len(self.states) > len(before)
+
+    
                     
+
+    # def trans_update(self, s, q):
+    #     for a in self.imdp.actions.get(s, ()):
+    #         outs = self.imdp.intervals.get((s, a), {})
+    #         if not outs: continue
+    #         self.actions[(s, q)].add(a)
+    #         prod_outs: Dict[ProdState, Tuple[float, float]] = {}
+    #         for s2, (l, u) in outs.items():
+    #             for imdp_label_s in self.imdp.label.get(s2, frozenset()):
+    #                 for q3 in (self.buchi.step(q, frozenset({imdp_label_s})) | {q}):
+    #                     ps = (s2, q3)
+    #                     self.states.add(ps)
+
+    #                     # prod_outs[ps] = prod_outs.get(ps, 0.0) + prob
+    #                     old = prod_outs.get(ps, (0.0, 0.0))
+    #                     prod_outs[ps] = (old[0] + l, old[1] + u)
+
+    #                     if q3 in self.buchi.acc:
+    #                         self.acc_states.add(ps)
+    #         self.trans_prod[((s, q), a)] = prod_outs
+
+
 
     def trans_update(self, s, q):
         for a in self.imdp.actions.get(s, ()):
             outs = self.imdp.intervals.get((s, a), {})
-            if not outs: continue
+            if not outs: 
+                continue
             self.actions[(s, q)].add(a)
-            prod_outs: Dict[ProdState, Tuple[float, float]] = {}
+            prod_outs = {}
             for s2, (l, u) in outs.items():
-                for imdp_label_s in self.imdp.label[s2]:
-                    for q3 in (self.buchi.step(q, frozenset({imdp_label_s})) | {q}):
-                        ps = (s2, q3)
-                        self.states.add(ps)
-
-                        # prod_outs[ps] = prod_outs.get(ps, 0.0) + prob
-                        old = prod_outs.get(ps, (0.0, 0.0))
-                        prod_outs[ps] = (old[0] + l, old[1] + u)
-
-                        if q3 in self.buchi.acc:
-                            self.acc_states.add(ps)
+                labset = self.imdp.label.get(s2, frozenset())
+                next_qs = self.buchi.step(q, labset)
+                if not next_qs:
+                    # if your Büchi is total on labset, this won’t happen
+                    continue
+                for q3 in next_qs:
+                    ps = (s2, q3)
+                    self.states.add(ps)
+                    old = prod_outs.get(ps, (0.0, 0.0))
+                    prod_outs[ps] = (old[0] + l, old[1] + u)
+                    if q3 in self.buchi.acc:
+                        self.acc_states.add(ps)
             self.trans_prod[((s, q), a)] = prod_outs
+
+
 
 
 
@@ -343,11 +382,12 @@ def max_expectation_for_action(intervals_list: List[Tuple[ProdState, float, floa
     return exp
 
 # ---------- Interval Iteration (returns L, U) ----------
-def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 1000):
+def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
     L: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
     U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
 
     for iterator in range(max_iter):
+        if iterator % 100 == 0: print("Iteration", iterator)
         deltaL = 0.0
         deltaU = 0.0
 
@@ -380,7 +420,7 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 1000):
         # gap = max(U[x] - L[x] for x in P.states) if P.states else 0.0
         if max(deltaL, deltaU) <= eps: # and gap <= eps:
             print("breakkkkkk")
-            print(iterator)
+            print("Converged at iteration", iterator)
             break
 
     return L, U
@@ -438,6 +478,8 @@ if __name__ == "__main__":
         else:
             B.add_edge(0, labset, 0)
             B.add_edge(1, labset, 1)
+
+
 
 
     P = Product(I, B)
