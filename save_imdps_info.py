@@ -42,56 +42,57 @@ def append_row(csv_path: Path, row: dict):
         csv.DictWriter(f, fieldnames=COLUMNS).writerow(clean)
 
 
-if __name__ == "__main__":
-    address = 'Ab_UAV_10-13-2025_17-06-26'
-    run = {
-        "address": address,
-        "PRISM Path": "/home/sarv/SarvWork/prism/prism/prism/bin/prism",
-        "Model File": "JAIR22_models",
-        "Model Name": "UAV",
-        "timebound" : 32,
-        "Monte Carlo Iter": 1000,
-        "x_init": [-6,0,-6,0],
-        "Noise Samples": 3200,
-        "Confidence": 1e-08,
-        "Sample Clustering": 0.01,
-        "Iterations": 1,
-        "drone_mc_step": 0.2,
-        "drone_mc_iter": 100,
-        "bld_partition": [25, 35],
-        "bld_target_size": [[-0.1, 0.1], [-0.3, 0.3]],
-        "bld_par_uncertainty": False,
-        "drug_partition": [20, 20, 20],
-        "UAV_dim": 2,
-        "noise_factor": 1,
-        "Regions (base)": 784,
-        "Exported States (PRISM)": 787,
-        "Choices": 11388,
-        "Transitions": 417998,
-        "Noise Factor": 1,
-        "Partition": [7,4,7,4],
-        "Enabled (total)": 667,
-        "Enabled (init)": 25,
-        "Deadlocks": 128,
-        "PRISM Ver": "4.8.1",
-        "Property": 'Pmaxmin=? [ F<=16 "reached" ]',
-        "PRISM Iter": 16,
-        "Range (init states)": [0.0,1.0],
-        "Final Result": [0.0,1.0],
-        "DefAct (s)": 0.177,
-        "ProbCalc (s)": 4.002,
-        "Export (s)": 1.787,
-        "Build (s)": 0.957,
-        "Check (s)": 1.065,
-        "Total (s)": 5.490,
-        "MC Init": 58,
-        "MC Summary": "MC 1 run (same init)",
-        "Warnings": "Deadlocks fixed in 128 states; total 2 warnings",
-        **_default_env(),
-    }
+# if __name__ == "__main__":
+address = 'Ab_UAV_10-13-2025_21-20-12'
+run = {
+    "address": address,
+    "PRISM Path": "/home/sarv/SarvWork/prism/prism/prism/bin/prism",
+    "Model File": "JAIR22_models",
+    "Model Name": "UAV",
+    "timebound": 8,
+    "Monte Carlo Iter": 1000,
+    "x_init": [-6, 0, -6, 0],
+    "Noise Samples": 3200,
+    "Confidence": 1e-08,
+    "Sample Clustering": 0.01,
+    "Iterations": 1,
+    "drone_mc_step": 0.2,
+    "drone_mc_iter": 100,
+    "bld_partition": [25, 35],
+    "bld_target_size": [[-0.1, 0.1], [-0.3, 0.3]],
+    "bld_par_uncertainty": False,
+    "drug_partition": [20, 20, 20],
+    "UAV_dim": 2,
+    "noise_factor": 1,
+    "Regions (base)": 784,
+    "Exported States (PRISM)": 787,
+    "Choices": 11388,
+    "Transitions": 417998,
+    "Noise Factor": 1,
+    "Partition": [7, 4, 7, 4],
+    "Enabled (total)": 667,
+    "Enabled (init)": 25,
+    "Deadlocks": 128,
+    "PRISM Ver": "4.8.1",
+    "Property": 'Pmaxmin=? [ F<=4 "reached" ]',
+    "PRISM Iter": 4,
+    "Range (init states)": [0.0, 1.0],
+    "Final Result": [0.0, 1.0],
+    "DefAct (s)": 0.09338760376,
+    "ProbCalc (s)": 2.889494657516,
+    "Export (s)": 2.376542806625,
+    "Build (s)": 1.809,
+    "Check (s)": 0.543,
+    "Total (s)": 5.05219078064,
+    "MC Init": 58,
+    "MC Summary": "MC 1 run (same init)",
+    "Warnings": "Switched to explicit engine; deadlocks fixed in 128 states; total 2 warnings",
+    **_default_env(),
+}
 
-    csv_path = Path("gen_imdp_info/IMDPs_info.csv")
-    append_row(csv_path, run)
+
+csv_path = Path("gen_imdp_info/IMDPs_info.csv")
+append_row(csv_path, run)
 
 
 
