@@ -43,7 +43,12 @@ def append_row(csv_path: Path, row: dict):
 
 
 
-address = 'Ab_UAV_10-13-2025_22-08-18'
+
+
+
+
+
+address = 'Ab_UAV_10-13-2025_22-47-31'
 run = {
     "address": address,
     "PRISM Path": "/home/sarv/SarvWork/prism/prism/prism/bin/prism",
@@ -52,7 +57,7 @@ run = {
     "timebound": 64,
     "Monte Carlo Iter": 1000,
     "x_init": [-6, 0, -6, 0],
-    "Noise Samples": 15000,
+    "Noise Samples": 60000,
     "Confidence": 1e-08,
     "Sample Clustering": 0.01,
     "Iterations": 1,
@@ -67,7 +72,7 @@ run = {
     "Regions (base)": 784,
     "Exported States (PRISM)": 787,
     "Choices": 11388,
-    "Transitions": 518698,
+    "Transitions": 591130,
     "Noise Factor": 1,
     "Partition": [7, 4, 7, 4],
     "Enabled (total)": 667,
@@ -78,12 +83,12 @@ run = {
     "PRISM Iter": 32,
     "Range (init states)": [0.0, 1.0],
     "Final Result": [0.0, 1.0],
-    "DefAct (s)": 0.108954906464,
-    "ProbCalc (s)": 17.104776620865,
-    "Export (s)": 2.869165182114,
-    "Build (s)": 0.766,
-    "Check (s)": 2.14,
-    "Total (s)": 4.078805446625,
+    "DefAct (s)": 0.103829622269,
+    "ProbCalc (s)": 77.173201084137,
+    "Export (s)": 3.519843101501,
+    "Build (s)": 1.015,
+    "Check (s)": 3.063,
+    "Total (s)": 5.348795175552,
     "MC Init": 58,
     "MC Summary": "MC 1 run (same init)",
     "Warnings": "Switched to explicit engine; deadlocks fixed in 128 states; total 2 warnings",
