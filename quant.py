@@ -1,7 +1,8 @@
 from collections import defaultdict
 from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
 import re
-
+import csv
+from pathlib import Path
 
 State = int
 QState = int
@@ -360,7 +361,7 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
 
     return L, U, iterator
 
-def quantitative_buchi_imdp(P, eps: float = 1e-10):
+def quantitative_buchi_imdp(P, eps: float = 1e-3):
     L, U, iterator = interval_iteration(P, P.target, eps=eps)
     return {
         "product": P,
@@ -397,35 +398,101 @@ tra = "Abstraction_interval.tra"
 print("\n=== IMDP demo (L <= U, strict) ===")
 
 
+csv_path = Path("gen_imdp_info/IMDPs_info.csv")
+root_models = Path("MDPs")
 
-root_adr = "MDPs/Ab_UAV_10-10-2025_15-15-51/N=/"
+results = []  # will hold dicts: {address, noise_samples, res}
 
-I = IMDP()
-info, AP = imdp_from_files_quant(
-    root_adr + str("Noise Samples") + "_0/" + sta,
-    root_adr + str("Noise Samples") + "_0/" + lab,
-    root_adr + str("Noise Samples") + "_0/" + tra,
-    I
-    )
+with csv_path.open(newline='', encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        if not row or not row.get("timebound"):
+            continue
 
-all_labsets = {I.label[s] for s in I.states}  # set of frozensets
-B = cal_buchi(all_labsets)
+        try:
+            if int(row["timebound"]) != 64:
+                continue
+        except ValueError:
+            continue
 
-P = Product(I, B)
-res = quantitative_buchi_imdp(P, eps=1e-12)
+        address = row["address"].strip()
+        try:
+            noise_samples = int(float(row["Noise Samples"]))
+        except ValueError:
+            # print(f"Skipping {address}: invalid Noise Samples = {row.get('Noise Samples')!r}")
+            continue
+
+        base = root_models / address / f"N={noise_samples}_0"
+
+        sta_p = base / sta
+        lab_p = base / lab
+        tra_p = base / tra
+
+        if not (sta_p.exists() and lab_p.exists() and tra_p.exists()):
+            print(f"Missing files for {address} (noise={noise_samples}). Skipping.")
+            continue
+
+        I = IMDP()
+        info, AP = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
+
+        all_labsets = {I.label[s] for s in I.states}
+        B = cal_buchi(all_labsets)
+
+        P = Product(I, B)
+        res = quantitative_buchi_imdp(P, eps=1e-3)
 
 
 
 
 
-L, U = res["L"], res["U"]
-
-proj_L = defaultdict(float); proj_U = defaultdict(float)
-for (s, q), v in L.items(): proj_L[s] = max(proj_L[s], v)
-for (s, q), v in U.items(): proj_U[s] = max(proj_U[s], v)
-print("L (min probs) by base state:", dict(proj_L))
-print("U (max probs) by base state:", dict(proj_U))
 
 
 
+
+
+        print(res["Convergence_iteration"])
+
+
+        results.append({
+            "address": address,
+            "noise_samples": noise_samples,
+            "result": res
+        })
+        print(f"{address} | noise={noise_samples} => result={res}")
+
+# (optional) sort and plot
+results.sort(key=lambda d: d["noise_samples"])
+try:
+    import matplotlib.pyplot as plt
+    xs = [d["noise_samples"] for d in results]
+    ys = [d["result"] for d in results]
+    plt.figure()
+    plt.plot(xs, ys, marker="o")
+    plt.xlabel("Noise Samples")
+    plt.ylabel("Quantitative Büchi (robust) value")
+    plt.title("IMDP results for timebound = 64")
+    plt.grid(True)
+    plt.show()
+except Exception as e:
+    print("Plot skipped:", e)
+
+# (optional) save a CSV you can reuse
+out_csv = Path("gen_imdp_info/IMDPs_timebound64_results.csv")
+with out_csv.open("w", newline="", encoding="utf-8") as g:
+    w = csv.DictWriter(g, fieldnames=["address", "noise_samples", "result"])
+    w.writeheader()
+    w.writerows(results)
+print(f"Wrote {out_csv}")
+
+# ********
+
+
+
+# L, U = res["L"], res["U"]
+
+# proj_L = defaultdict(float); proj_U = defaultdict(float)
+# for (s, q), v in L.items(): proj_L[s] = max(proj_L[s], v)
+# for (s, q), v in U.items(): proj_U[s] = max(proj_U[s], v)
+# print("L (min probs) by base state:", dict(proj_L))
+# print("U (max probs) by base state:", dict(proj_U))
 
