@@ -450,26 +450,37 @@ def constants_vs_var(cons, variable): #cons: Dict{con:str, val:str}
         return results
 
 
-def plot_x(results, x_var, y_var, con, val):
+def plot_x(results, x_var, y_var, cons):
     results.sort(key=lambda d: d[x_var])
     xs = [d[x_var] for d in results]
     ys = [d[y_var] for d in results]
     plt.figure()
     plt.plot(xs, ys, marker="o")
     plt.xlabel(x_var)
-    plt.ylabel("Quantitative Büchi (robust) value")
-    plt.title(f"IMDP results for {con} = {val}, varying {x_var}")
+    # plt.ylabel("Quantitative Büchi (robust) value")
+
+    constant = ", ".join([f"{k}={v}" for k, v in cons.items()])
+    plt.title(f"{y_var} vs {x_var} ({constant})")
+
     plt.grid(True)
     plt.show()
     plt.savefig(f"{x_var}.png")
 
 
 
-results = constants_vs_var({"timebound": "64"}, "Noise Samples")
-plot_x(results, "Noise Samples", "Execution_time_sec", "timebound", "64")
+cons, variable = {"timebound": "64"}, "Noise Samples"
+results = constants_vs_var(cons, variable)
+plot_x(results, variable, "Execution_time_sec", cons)
 
 
+# cons, variable = {"timebound": "64"}, "Transitions"
+# results = constants_vs_var(cons, variable)
+# plot_x(results, variable, "Execution_time_sec", cons)
 
+
+# cons, variable = {"timebound": "64"}, "Transitions
+# results = constants_vs_var(cons, variable)
+# plot_x(results, variable, "Execution_time_sec", cons)
 
 
 
