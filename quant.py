@@ -462,8 +462,6 @@ def plot_x(results, x_var, y_var, title):
 
 
 
-<<<<<<< HEAD
-
 run_imdp()
 
 # con, val, variable = "timebound", "64", "Noise Samples"
@@ -483,14 +481,11 @@ run_imdp()
 # con, val, variable = "Transitions", "417998", "timebound"
 # results = constants_vs_var(con, val, variable)
 # plot_x(results, variable, "Execution_time_sec", con, val)
-=======
 
 con, val, variable = "timebound", "64", "Transitions"
 results = constants_vs_var(con, val, variable)
 title = f"Execution_time_sec vs {variable} ({con}={val})"
 plot_x(results, variable, "Execution_time_sec", title)
->>>>>>> b4207a4 (plots..)
-
 
 a = 5
 
