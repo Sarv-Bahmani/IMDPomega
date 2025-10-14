@@ -48,60 +48,86 @@ def append_row(csv_path: Path, row: dict):
 
 
 
-address = 'Ab_UAV_10-13-2025_22-47-31'
+# address = 'Ab_UAV_10-13-2025_22-47-31'
 run = {
-    "address": address,
-    "PRISM Path": "/home/sarv/SarvWork/prism/prism/prism/bin/prism",
-    "Model File": "JAIR22_models",
-    "Model Name": "UAV",
-    "timebound": 64,
-    "Monte Carlo Iter": 1000,
-    "x_init": [-6, 0, -6, 0],
-    "Noise Samples": 60000,
-    "Confidence": 1e-08,
-    "Sample Clustering": 0.01,
-    "Iterations": 1,
-    "drone_mc_step": 0.2,
-    "drone_mc_iter": 100,
-    "bld_partition": [25, 35],
-    "bld_target_size": [[-0.1, 0.1], [-0.3, 0.3]],
-    "bld_par_uncertainty": False,
-    "drug_partition": [20, 20, 20],
-    "UAV_dim": 2,
-    "noise_factor": 1,
-    "Regions (base)": 784,
-    "Exported States (PRISM)": 787,
-    "Choices": 11388,
-    "Transitions": 591130,
-    "Noise Factor": 1,
-    "Partition": [7, 4, 7, 4],
-    "Enabled (total)": 667,
-    "Enabled (init)": 25,
-    "Deadlocks": 128,
-    "PRISM Ver": "4.8.1",
-    "Property": 'Pmaxmin=? [ F<=32 "reached" ]',
-    "PRISM Iter": 32,
-    "Range (init states)": [0.0, 1.0],
-    "Final Result": [0.0, 1.0],
-    "DefAct (s)": 0.103829622269,
-    "ProbCalc (s)": 77.173201084137,
-    "Export (s)": 3.519843101501,
-    "Build (s)": 1.015,
-    "Check (s)": 3.063,
-    "Total (s)": 5.348795175552,
-    "MC Init": 58,
-    "MC Summary": "MC 1 run (same init)",
-    "Warnings": "Switched to explicit engine; deadlocks fixed in 128 states; total 2 warnings",
-    **_default_env(),
+    # "address": address,
+    # "PRISM Path": "/home/sarv/SarvWork/prism/prism/prism/bin/prism",
+    # "Model File": "JAIR22_models",
+    # "Model Name": "UAV",
+    # "timebound": 64,
+    # "Monte Carlo Iter": 1000,
+    # "x_init": [-6, 0, -6, 0],
+    # "Noise Samples": 60000,
+    # "Confidence": 1e-08,
+    # "Sample Clustering": 0.01,
+    # "Iterations": 1,
+    # "drone_mc_step": 0.2,
+    # "drone_mc_iter": 100,
+    # "bld_partition": [25, 35],
+    # "bld_target_size": [[-0.1, 0.1], [-0.3, 0.3]],
+    # "bld_par_uncertainty": False,
+    # "drug_partition": [20, 20, 20],
+    # "UAV_dim": 2,
+    # "noise_factor": 1,
+    # "Regions (base)": 784,
+    # "Exported States (PRISM)": 787,
+    # "Choices": 11388,
+    # "Transitions": 591130,
+    # "Noise Factor": 1,
+    # "Partition": [7, 4, 7, 4],
+    # "Enabled (total)": 667,
+    # "Enabled (init)": 25,
+    # "Deadlocks": 128,
+    # "PRISM Ver": "4.8.1",
+    # "Property": 'Pmaxmin=? [ F<=32 "reached" ]',
+    # "PRISM Iter": 32,
+    # "Range (init states)": [0.0, 1.0],
+    # "Final Result": [0.0, 1.0],
+    # "DefAct (s)": 0.103829622269,
+    # "ProbCalc (s)": 77.173201084137,
+    # "Export (s)": 3.519843101501,
+    # "Build (s)": 1.015,
+    # "Check (s)": 3.063,
+    # "Total (s)": 5.348795175552,
+    # "MC Init": 58,
+    # "MC Summary": "MC 1 run (same init)",
+    # "Warnings": "Switched to explicit engine; deadlocks fixed in 128 states; total 2 warnings",
+    # **_default_env(),
+    "Execution_time_sec": "",
+    "Convergence_iteration": ""
 }
-
 
 
 csv_path = Path("gen_imdp_info/IMDPs_info.csv")
 append_row(csv_path, run)
 
 
+# csv_path = Path("gen_imdp_info/IMDPs_info.csv")
 
+# # read the existing rows
+# with csv_path.open(newline='', encoding='utf-8') as f:
+#     reader = csv.DictReader(f)
+#     rows = list(reader)
+#     fieldnames = reader.fieldnames or []
+#
+# # add the new columns if not already there
+# if "Execution_time_sec" not in fieldnames:
+#     fieldnames.append("Execution_time_sec")
+# if "Convergence_iteration" not in fieldnames:
+#     fieldnames.append("Convergence_iteration")
+
+# # fill the new columns with blanks (or default values)
+# for row in rows:
+#     if "Execution_time_sec" not in row or not row["Execution_time_sec"]:
+#         row["Execution_time_sec"] = ""
+#     if "Convergence_iteration" not in row or not row["Convergence_iteration"]:
+#         row["Convergence_iteration"] = ""
+
+# overwrite the same CSV with the new columns
+# with csv_path.open("w", newline='', encoding='utf-8') as f:
+#     writer = csv.DictWriter(f, fieldnames=fieldnames)
+#     writer.writeheader()
+#     writer.writerows(rows)
 
 
 

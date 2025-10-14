@@ -356,7 +356,7 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
 
         # gap = max(U[x] - L[x] for x in P.states) if P.states else 0.0
         if max(deltaL, deltaU) <= eps: # and gap <= eps:
-            print("breakkkkkk Converged at iteration", iterator)
+            # print("breakkkkkk Converged at iteration", iterator)
             break
 
     return L, U, iterator
@@ -387,6 +387,10 @@ def buchi_reach(all_labsets):
     return B
 
 
+def update_csv_res(csv_path):
+    pass
+
+
 
 
 sta = "Abstraction_interval.sta"
@@ -401,29 +405,16 @@ results = []  # will hold dicts: {address, noise_samples, res}
 with csv_path.open(newline='', encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
-        if not row or not row.get("timebound"):
-            continue
-
-        try:
-            if int(row["timebound"]) != 64:
-                continue
-        except ValueError:
+        if int(row["timebound"]) != 64:
             continue
 
         address = row["address"].strip()
-        try:
-            noise_samples = int(float(row["Noise Samples"]))
-        except ValueError:
-            continue
+        noise_samples = int(float(row["Noise Samples"]))
 
         base = root_models / address / f"N={noise_samples}_0"
-
         sta_p = base / sta
         lab_p = base / lab
         tra_p = base / tra
-
-        if not (sta_p.exists() and lab_p.exists() and tra_p.exists()):
-            continue
 
         I = IMDP()
         info, AP = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
@@ -432,7 +423,6 @@ with csv_path.open(newline='', encoding="utf-8") as f:
         B = buchi_reach(all_labsets)
 
         P = Product(I, B)
-        print(address)
         res = quantitative_buchi_imdp(P, eps=1e-3)
 
         results.append({
@@ -440,9 +430,13 @@ with csv_path.open(newline='', encoding="utf-8") as f:
             "Execution_time_sec": res["Execution_time_sec"],
             "Convergence_iteration": res["Convergence_iteration"],
         })
+
         print(f"{address} | noise={noise_samples} => \
                Execution_time_sec={res['Execution_time_sec']:.2f}, \
                Convergence_iteration={res['Convergence_iteration']}")
+
+
+        update_csv_res(csv_path)
 
 
 
