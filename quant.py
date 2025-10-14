@@ -392,7 +392,6 @@ def update_csv_res(csv_path):
 
 
 
-
 sta = "Abstraction_interval.sta"
 lab = "Abstraction_interval.lab"
 tra = "Abstraction_interval.tra"
