@@ -426,31 +426,29 @@ results = []  # will hold dicts: {address, noise_samples, res}
 with csv_path.open(newline='', encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
-        if int(row["timebound"]) != 64: continue
+        try:
+            if int(row["timebound"]) != 64: continue
+        except: continue
 
         address = row["address"].strip()
         noise_samples = int(float(row["Noise Samples"]))
         base = root_models / address / f"N={noise_samples}_0"
         sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
 
-        I = IMDP()
-        info, AP = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
-
-        all_labsets = {I.label[s] for s in I.states}
-        B = buchi_reach(all_labsets)
-
-        P = Product(I, B)
-        res = quantitative_buchi_imdp(P, eps=1e-3)
+        if row["Execution_time_sec"] == "":
+            I = IMDP()
+            info, AP = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
+            all_labsets = {I.label[s] for s in I.states}
+            B = buchi_reach(all_labsets)
+            P = Product(I, B)
+            res = quantitative_buchi_imdp(P, eps=1e-3)
+            update_csv_reslt(csv_path, res)
 
         results.append({"noise_samples": noise_samples,
-                        "Execution_time_sec": res["Execution_time_sec"],
-                        "Convergence_iteration": res["Convergence_iteration"],})
+                        "Execution_time_sec": row["Execution_time_sec"],
+                        "Convergence_iteration": row["Convergence_iteration"],})
+        print(f"{address}", results[-1])
 
-        print(f"{address} | noise={noise_samples} => \
-               Execution_time_sec={res['Execution_time_sec']:.2f}, \
-               Convergence_iteration={res['Convergence_iteration']}")
-
-        update_csv_reslt(csv_path, res)
 
 
 
@@ -464,6 +462,7 @@ plt.ylabel("Quantitative Büchi (robust) value")
 plt.title("IMDP results for timebound = 64, varying noise samples")
 plt.grid(True)
 plt.show()
+plt.savefig("plot.png")
 
 
 
@@ -474,4 +473,3 @@ plt.show()
 # for (s, q), v in U.items(): proj_U[s] = max(proj_U[s], v)
 # ("L (min probs) by base state:", dict(proj_L))
 # ("U (max probs) by base state:", dict(proj_U))
-
