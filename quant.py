@@ -388,7 +388,24 @@ def buchi_reach(all_labsets):
 
 
 def update_csv_res(csv_path):
-    pass
+    rows = []
+    with csv_path.open(newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+        rows = list(reader)
+
+    for row in rows:
+        if row["address"].strip() == address:
+            row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
+            row["Convergence_iteration"] = str(res["Convergence_iteration"])
+            break
+
+    with csv_path.open("w", newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 
 
 
@@ -435,7 +452,7 @@ with csv_path.open(newline='', encoding="utf-8") as f:
                Convergence_iteration={res['Convergence_iteration']}")
 
 
-        update_csv_res(csv_path)
+        update_csv_res(csv_path, res)
 
 
 
