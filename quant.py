@@ -487,7 +487,4 @@ results = constants_vs_var(con, val, variable)
 title = f"Execution_time_sec vs {variable} ({con}={val})"
 plot_x(results, variable, "Execution_time_sec", title)
 
-a = 5
-
-
 
