@@ -414,33 +414,31 @@ def update_csv_reslt(csv_path, address, res):
 
 
 
+def run_imdp(address, noise_samples):
+    base = root_models / address / f"N={noise_samples}_0"
+    sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
+    I = IMDP()
+    _, _ = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
+    all_labsets = {I.label[s] for s in I.states}
+    B = buchi_reach(all_labsets)
+    P = Product(I, B)
+    res = quantitative_buchi_imdp(P, eps=1e-3)
+    update_csv_reslt(csv_path, address, res)
 
 
 
 def constants_vs_var(con, val, variable): #cons: Dict{con:str, val:str}
     results = []  # will hold dicts: {address, noise_samples, res}
-
     with csv_path.open(newline='', encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             try:
                 if (row[con]) != val: continue
             except: continue
-
             address = row["address"].strip()
             noise_samples = int(float(row["Noise Samples"]))
-            base = root_models / address / f"N={noise_samples}_0"
-            sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
-
             if row["Execution_time_sec"] == "":
-                I = IMDP()
-                _, _ = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
-                all_labsets = {I.label[s] for s in I.states}
-                B = buchi_reach(all_labsets)
-                P = Product(I, B)
-                res = quantitative_buchi_imdp(P, eps=1e-3)
-                update_csv_reslt(csv_path, address, res)
-
+                run_imdp(address, noise_samples)
             variable_val = float(row[variable])
             results.append({variable: variable_val,
                             "Execution_time_sec": float(row["Execution_time_sec"]),
@@ -467,6 +465,9 @@ def plot_x(results, x_var, y_var, con, val):
 
 
 
+
+run_imdp()
+
 # con, val, variable = "timebound", "64", "Noise Samples"
 # results = constants_vs_var(con, val, variable)
 # del results[0]
@@ -474,12 +475,12 @@ def plot_x(results, x_var, y_var, con, val):
 # plot_x(results, variable, "Execution_time_sec", con, val)
 
 
-con, val, variable = "timebound", "64", "Transitions"
-results = constants_vs_var(con, val, variable)
-del results[0]
-del results[1]
-plot_x(results, variable, "Execution_time_sec", con, val)
-
+# con, val, variable = "timebound", "64", "Transitions"
+# results = constants_vs_var(con, val, variable)
+# del results[0]
+# del results[1]
+# plot_x(results, variable, "Execution_time_sec", con, val)
+#
 
 # con, val, variable = "Transitions", "417998", "timebound"
 # results = constants_vs_var(con, val, variable)
@@ -487,3 +488,6 @@ plot_x(results, variable, "Execution_time_sec", con, val)
 
 
 a = 5
+
+
+
