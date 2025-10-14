@@ -325,7 +325,6 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
     U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
 
     for iterator in range(max_iter):
-        if iterator % 10 == 0: print("Iteration", iterator)
         deltaL = 0.0
         deltaU = 0.0
 
@@ -357,8 +356,7 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
 
         # gap = max(U[x] - L[x] for x in P.states) if P.states else 0.0
         if max(deltaL, deltaU) <= eps: # and gap <= eps:
-            print("breakkkkkk")
-            print("Converged at iteration", iterator)
+            print("breakkkkkk Converged at iteration", iterator)
             break
 
     return L, U, iterator
@@ -374,7 +372,7 @@ def quantitative_buchi_imdp(P, eps: float = 1e-3):
         "Execution_time_sec": execution_time
     }
 
-def cal_buchi(all_labsets):
+def buchi_reach(all_labsets):
     B = BuchiA({tok for S in all_labsets for tok in S})
     B.add_state(0, initial=True)
     B.add_state(1, accepting=True)
@@ -391,15 +389,9 @@ def cal_buchi(all_labsets):
 
 
 
-
-
-
 sta = "Abstraction_interval.sta"
 lab = "Abstraction_interval.lab"
 tra = "Abstraction_interval.tra"
-
-print("\n=== IMDP demo (L <= U, strict) ===")
-
 
 csv_path = Path("gen_imdp_info/IMDPs_info.csv")
 root_models = Path("MDPs")
@@ -422,7 +414,6 @@ with csv_path.open(newline='', encoding="utf-8") as f:
         try:
             noise_samples = int(float(row["Noise Samples"]))
         except ValueError:
-            # print(f"Skipping {address}: invalid Noise Samples = {row.get('Noise Samples')!r}")
             continue
 
         base = root_models / address / f"N={noise_samples}_0"
@@ -432,21 +423,17 @@ with csv_path.open(newline='', encoding="utf-8") as f:
         tra_p = base / tra
 
         if not (sta_p.exists() and lab_p.exists() and tra_p.exists()):
-            print(f"Missing files for {address} (noise={noise_samples}). Skipping.")
             continue
 
         I = IMDP()
         info, AP = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
 
         all_labsets = {I.label[s] for s in I.states}
-        B = cal_buchi(all_labsets)
+        B = buchi_reach(all_labsets)
 
         P = Product(I, B)
         print(address)
         res = quantitative_buchi_imdp(P, eps=1e-3)
-
-
-        print(res["Convergence_iteration"])
 
         results.append({
             "noise_samples": noise_samples,
@@ -477,6 +464,6 @@ plt.show()
 # proj_L = defaultdict(float); proj_U = defaultdict(float)
 # for (s, q), v in L.items(): proj_L[s] = max(proj_L[s], v)
 # for (s, q), v in U.items(): proj_U[s] = max(proj_U[s], v)
-# print("L (min probs) by base state:", dict(proj_L))
-# print("U (max probs) by base state:", dict(proj_U))
+# ("L (min probs) by base state:", dict(proj_L))
+# ("U (max probs) by base state:", dict(proj_U))
 
