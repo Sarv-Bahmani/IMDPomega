@@ -1,4 +1,6 @@
+import matplotlib.pyplot as plt
 from collections import defaultdict
+import time
 from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
 import re
 import csv
@@ -362,14 +364,14 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
     return L, U, iterator
 
 def quantitative_buchi_imdp(P, eps: float = 1e-3):
+    start_time = time.perf_counter()
     L, U, iterator = interval_iteration(P, P.target, eps=eps)
+    execution_time = time.perf_counter() - start_time
     return {
-        "product": P,
-        "AECs": P.aecs,
-        "target_union": P.target,
-        "L": L,   # minimal (robust) probabilities to satisfy Büchi
-        "U": U,   # maximal (optimistic) probabilities to satisfy Büchi,
-        "Convergence_iteration": iterator
+        "L": L,   
+        "U": U,
+        "Convergence_iteration": iterator,
+        "Execution_time_sec": execution_time
     }
 
 def cal_buchi(all_labsets):
@@ -385,6 +387,7 @@ def cal_buchi(all_labsets):
             B.add_edge(1, labset, 1)
 
     return B
+
 
 
 
@@ -442,47 +445,29 @@ with csv_path.open(newline='', encoding="utf-8") as f:
         res = quantitative_buchi_imdp(P, eps=1e-3)
 
 
-
-
-# ****************************
-
-
-
-
-
         print(res["Convergence_iteration"])
 
-
         results.append({
-            "address": address,
             "noise_samples": noise_samples,
-            "result": res
+            "Execution_time_sec": res["Execution_time_sec"],
+            "Convergence_iteration": res["Convergence_iteration"],
         })
-        print(f"{address} | noise={noise_samples} => result={res}")
+        print(f"{address} | noise={noise_samples} => \
+               Execution_time_sec={res['Execution_time_sec']:.2f}, \
+               Convergence_iteration={res['Convergence_iteration']}")
+
+
 
 results.sort(key=lambda d: d["noise_samples"])
-try:
-    import matplotlib.pyplot as plt
-    xs = [d["noise_samples"] for d in results]
-    ys = [d["result"] for d in results]
-    plt.figure()
-    plt.plot(xs, ys, marker="o")
-    plt.xlabel("Noise Samples")
-    plt.ylabel("Quantitative Büchi (robust) value")
-    plt.title("IMDP results for timebound = 64")
-    plt.grid(True)
-    plt.show()
-except Exception as e:
-    print("Plot skipped:", e)
-
-out_csv = Path("gen_imdp_info/IMDPs_timebound64_results.csv")
-with out_csv.open("w", newline="", encoding="utf-8") as g:
-    w = csv.DictWriter(g, fieldnames=["address", "noise_samples", "result"])
-    w.writeheader()
-    w.writerows(results)
-print(f"Wrote {out_csv}")
-
-# ********
+xs = [d["noise_samples"] for d in results]
+ys = [d["result"] for d in results]
+plt.figure()
+plt.plot(xs, ys, marker="o")
+plt.xlabel("Noise Samples")
+plt.ylabel("Quantitative Büchi (robust) value")
+plt.title("IMDP results for timebound = 64, varying noise samples")
+plt.grid(True)
+plt.show()
 
 
 
