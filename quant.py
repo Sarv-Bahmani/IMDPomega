@@ -383,11 +383,10 @@ def buchi_reach(all_labsets):
         else:
             B.add_edge(0, labset, 0)
             B.add_edge(1, labset, 1)
-
     return B
 
 
-def update_csv_res(csv_path):
+def update_csv_reslt(csv_path):
     rows = []
     with csv_path.open(newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -409,6 +408,8 @@ def update_csv_res(csv_path):
 
 
 
+
+
 sta = "Abstraction_interval.sta"
 lab = "Abstraction_interval.lab"
 tra = "Abstraction_interval.tra"
@@ -416,21 +417,21 @@ tra = "Abstraction_interval.tra"
 csv_path = Path("gen_imdp_info/IMDPs_info.csv")
 root_models = Path("MDPs")
 
+
+
+
+
 results = []  # will hold dicts: {address, noise_samples, res}
 
 with csv_path.open(newline='', encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
-        if int(row["timebound"]) != 64:
-            continue
+        if int(row["timebound"]) != 64: continue
 
         address = row["address"].strip()
         noise_samples = int(float(row["Noise Samples"]))
-
         base = root_models / address / f"N={noise_samples}_0"
-        sta_p = base / sta
-        lab_p = base / lab
-        tra_p = base / tra
+        sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
 
         I = IMDP()
         info, AP = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
@@ -441,18 +442,15 @@ with csv_path.open(newline='', encoding="utf-8") as f:
         P = Product(I, B)
         res = quantitative_buchi_imdp(P, eps=1e-3)
 
-        results.append({
-            "noise_samples": noise_samples,
-            "Execution_time_sec": res["Execution_time_sec"],
-            "Convergence_iteration": res["Convergence_iteration"],
-        })
+        results.append({"noise_samples": noise_samples,
+                        "Execution_time_sec": res["Execution_time_sec"],
+                        "Convergence_iteration": res["Convergence_iteration"],})
 
         print(f"{address} | noise={noise_samples} => \
                Execution_time_sec={res['Execution_time_sec']:.2f}, \
                Convergence_iteration={res['Convergence_iteration']}")
 
-
-        update_csv_res(csv_path, res)
+        update_csv_reslt(csv_path, res)
 
 
 
