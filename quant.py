@@ -443,8 +443,8 @@ def constants_vs_var(con, val, variable): #cons: Dict{con:str, val:str}
 
             variable_val = float(row[variable])
             results.append({variable: variable_val,
-                            "Execution_time_sec": row["Execution_time_sec"],
-                            "Convergence_iteration": row["Convergence_iteration"],})
+                            "Execution_time_sec": float(row["Execution_time_sec"]),
+                            "Convergence_iteration": int(row["Convergence_iteration"]),})
             print(f"{address}", results[-1])
         return results
 
@@ -467,18 +467,23 @@ def plot_x(results, x_var, y_var, con, val):
 
 
 
-con, val, variable = "timebound", "64", "Noise Samples"
-results = constants_vs_var(con, val, variable)
-plot_x(results, variable, "Execution_time_sec", con, val)
+# con, val, variable = "timebound", "64", "Noise Samples"
+# results = constants_vs_var(con, val, variable)
+# del results[0]
+# del results[1]
+# plot_x(results, variable, "Execution_time_sec", con, val)
 
 
 con, val, variable = "timebound", "64", "Transitions"
 results = constants_vs_var(con, val, variable)
+del results[0]
+del results[1]
 plot_x(results, variable, "Execution_time_sec", con, val)
 
 
-# cons, variable = {"timebound": "64"}, "Transitions
-# results = constants_vs_var(cons, variable)
-# plot_x(results, variable, "Execution_time_sec", cons)
+# con, val, variable = "Transitions", "417998", "timebound"
+# results = constants_vs_var(con, val, variable)
+# plot_x(results, variable, "Execution_time_sec", con, val)
 
 
+a = 5
