@@ -447,7 +447,7 @@ def constants_vs_var(con, val, variable): #cons: Dict{con:str, val:str}
         return results
 
 
-def plot_x(results, x_var, y_var, con, val):
+def plot_x(results, x_var, y_var, title):
     results.sort(key=lambda d: d[x_var])
     xs = [d[x_var] for d in results]
     ys = [d[y_var] for d in results]
@@ -455,16 +455,14 @@ def plot_x(results, x_var, y_var, con, val):
     plt.plot(xs, ys, marker="o")
     plt.xlabel(x_var)
     # plt.ylabel("Quantitative Büchi (robust) value")
-
-    constant = (f"{con}={val}")
-    plt.title(f"{y_var} vs {x_var} ({constant})")
-
+    plt.title(title)
     plt.grid(True)
     plt.show()
     plt.savefig(f"{x_var}.png")
 
 
 
+<<<<<<< HEAD
 
 run_imdp()
 
@@ -485,6 +483,13 @@ run_imdp()
 # con, val, variable = "Transitions", "417998", "timebound"
 # results = constants_vs_var(con, val, variable)
 # plot_x(results, variable, "Execution_time_sec", con, val)
+=======
+
+con, val, variable = "timebound", "64", "Transitions"
+results = constants_vs_var(con, val, variable)
+title = f"Execution_time_sec vs {variable} ({con}={val})"
+plot_x(results, variable, "Execution_time_sec", title)
+>>>>>>> b4207a4 (plots..)
 
 
 a = 5
