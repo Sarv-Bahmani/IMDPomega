@@ -121,19 +121,27 @@ class BuchiA:
         self.ap = set(ap)
         self.Q: Set[QState] = set()
         self.q0 = 0
-        self.acc: Set[QState] = set()
+        self.acc: Set[(QState, str, QState)] = set()
         self.trans_automa: Dict[Tuple[QState, Label], Set[QState]] = defaultdict(set)
 
-    def add_state(self, q, initial=False, accepting=False):
+    def add_state(self, q, initial=False):
         self.Q.add(q)
         if initial: self.q0 = q
-        if accepting: self.acc.add(q)
 
-    def add_edge(self, q, lab, q2):
+    def add_edge(self, q, lab, q2, accepting=False):
         self.trans_automa[(q, lab)].add(q2)
+        if accepting: self.acc.add((q, lab, q2))
 
     def step(self, q, lab) -> Set[QState]:
         return self.trans_automa.get((q, lab), set())
+
+
+def buchi_reach(all_labsets):
+    B = BuchiA({tok for S in all_labsets for tok in S})
+    B.add_state(0, initial=True)
+    for labset in all_labsets:
+        B.add_edge(0, labset, 0, accepting= "reached" in labset)
+    return B
 
 
 class Product:
@@ -161,8 +169,6 @@ class Product:
             for q in self.buchi.Q:
                 ps = (s, q)
                 self.states.add(ps)
-                if q in self.buchi.acc:
-                    self.acc_states.add(ps)
 
         for (s, q) in set(self.states):
             self.trans_update(s, q)
@@ -380,18 +386,7 @@ def quantitative_buchi_imdp(P, eps: float = 1e-3):
         "Execution_time_sec": execution_time
     }
 
-def buchi_reach(all_labsets):
-    B = BuchiA({tok for S in all_labsets for tok in S})
-    B.add_state(0, initial=True)
-    B.add_state(1, accepting=True)
-    for labset in all_labsets:
-        if "reached" in labset:
-            B.add_edge(0, labset, 1)
-            B.add_edge(1, labset, 1)
-        else:
-            B.add_edge(0, labset, 0)
-            B.add_edge(1, labset, 1)
-    return B
+
 
 
 def update_csv_reslt(csv_path, address, res):
