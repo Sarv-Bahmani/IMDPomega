@@ -442,6 +442,7 @@ with csv_path.open(newline='', encoding="utf-8") as f:
         B = cal_buchi(all_labsets)
 
         P = Product(I, B)
+        print(address)
         res = quantitative_buchi_imdp(P, eps=1e-3)
 
 
@@ -460,7 +461,7 @@ with csv_path.open(newline='', encoding="utf-8") as f:
 
 results.sort(key=lambda d: d["noise_samples"])
 xs = [d["noise_samples"] for d in results]
-ys = [d["result"] for d in results]
+ys = [d["Execution_time_sec"] for d in results]
 plt.figure()
 plt.plot(xs, ys, marker="o")
 plt.xlabel("Noise Samples")
