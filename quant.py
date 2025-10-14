@@ -6,6 +6,14 @@ import re
 import csv
 from pathlib import Path
 
+
+sta = "Abstraction_interval.sta"
+lab = "Abstraction_interval.lab"
+tra = "Abstraction_interval.tra"
+
+csv_path = Path("gen_imdp_info/IMDPs_info.csv")
+root_models = Path("MDPs")
+
 State = int
 QState = int
 Action = str
@@ -386,7 +394,7 @@ def buchi_reach(all_labsets):
     return B
 
 
-def update_csv_reslt(csv_path):
+def update_csv_reslt(csv_path, address, res):
     rows = []
     with csv_path.open(newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -409,65 +417,108 @@ def update_csv_reslt(csv_path):
 
 
 
+def constants_vs_var(cons, variable): #cons: Dict{con:str, val:str}
+    results = []  # will hold dicts: {address, noise_samples, res}
 
-sta = "Abstraction_interval.sta"
-lab = "Abstraction_interval.lab"
-tra = "Abstraction_interval.tra"
+    with csv_path.open(newline='', encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            try:
+                for con, val in cons.items():
+                    if (row[con]) != val: continue
+            except: continue
 
-csv_path = Path("gen_imdp_info/IMDPs_info.csv")
-root_models = Path("MDPs")
+            address = row["address"].strip()
+            noise_samples = int(float(row["Noise Samples"]))
+            base = root_models / address / f"N={noise_samples}_0"
+            sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
 
+            if row["Execution_time_sec"] == "":
+                I = IMDP()
+                _, _ = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
+                all_labsets = {I.label[s] for s in I.states}
+                B = buchi_reach(all_labsets)
+                P = Product(I, B)
+                res = quantitative_buchi_imdp(P, eps=1e-3)
+                update_csv_reslt(csv_path, address, res)
 
-
-
-
-results = []  # will hold dicts: {address, noise_samples, res}
-
-with csv_path.open(newline='', encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        try:
-            if int(row["timebound"]) != 64: continue
-        except: continue
-
-        address = row["address"].strip()
-        noise_samples = int(float(row["Noise Samples"]))
-        base = root_models / address / f"N={noise_samples}_0"
-        sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
-
-        if row["Execution_time_sec"] == "":
-            I = IMDP()
-            info, AP = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
-            all_labsets = {I.label[s] for s in I.states}
-            B = buchi_reach(all_labsets)
-            P = Product(I, B)
-            res = quantitative_buchi_imdp(P, eps=1e-3)
-            update_csv_reslt(csv_path, res)
-
-        results.append({"noise_samples": noise_samples,
-                        "Execution_time_sec": row["Execution_time_sec"],
-                        "Convergence_iteration": row["Convergence_iteration"],})
-        print(f"{address}", results[-1])
+            variable_val = float(row[variable])
+            results.append({variable: variable_val,
+                            "Execution_time_sec": row["Execution_time_sec"],
+                            "Convergence_iteration": row["Convergence_iteration"],})
+            print(f"{address}", results[-1])
+        return results
 
 
+def plot_x(results, x_var, y_var, con, val):
+    results.sort(key=lambda d: d[x_var])
+    xs = [d[x_var] for d in results]
+    ys = [d[y_var] for d in results]
+    plt.figure()
+    plt.plot(xs, ys, marker="o")
+    plt.xlabel(x_var)
+    plt.ylabel("Quantitative Büchi (robust) value")
+    plt.title(f"IMDP results for {con} = {val}, varying {x_var}")
+    plt.grid(True)
+    plt.show()
+    plt.savefig(f"{x_var}.png")
 
 
-results.sort(key=lambda d: d["noise_samples"])
-xs = [d["noise_samples"] for d in results]
-ys = [d["Execution_time_sec"] for d in results]
-plt.figure()
-plt.plot(xs, ys, marker="o")
-plt.xlabel("Noise Samples")
-plt.ylabel("Quantitative Büchi (robust) value")
-plt.title("IMDP results for timebound = 64, varying noise samples")
-plt.grid(True)
-plt.show()
-plt.savefig("plot.png")
+
+results = constants_vs_var({"timebound": "64"}, "Noise Samples")
+plot_x(results, "Noise Samples", "Execution_time_sec", "timebound", "64")
 
 
+
+
+
+
+
+
+# results = []  # will hold dicts: {address, noise_samples, res}
+
+# with csv_path.open(newline='', encoding="utf-8") as f:
+#     reader = csv.DictReader(f)
+#     for row in reader:
+#         try:
+#             if int(row["timebound"]) != 64: continue
+#         except: continue
+
+#         address = row["address"].strip()
+#         noise_samples = int(float(row["Noise Samples"]))
+#         base = root_models / address / f"N={noise_samples}_0"
+#         sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
+
+#         if row["Execution_time_sec"] == "":
+#             I = IMDP()
+#             info, AP = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
+#             all_labsets = {I.label[s] for s in I.states}
+#             B = buchi_reach(all_labsets)
+#             P = Product(I, B)
+#             res = quantitative_buchi_imdp(P, eps=1e-3)
+#             update_csv_reslt(csv_path, res)
+
+#         results.append({"noise_samples": noise_samples,
+#                         "Execution_time_sec": row["Execution_time_sec"],
+#                         "Convergence_iteration": row["Convergence_iteration"],})
+#         print(f"{address}", results[-1])
+
+
+# results = constants_vs_var({"timebound": "64"}, "Noise Samples")
+
+# results.sort(key=lambda d: d["noise_samples"])
+# xs = [d["noise_samples"] for d in results]
+# ys = [d["Execution_time_sec"] for d in results]
+# plt.figure()
+# plt.plot(xs, ys, marker="o")
+# plt.xlabel("Noise Samples")
+# plt.ylabel("Quantitative Büchi (robust) value")
+# plt.title("IMDP results for timebound = 64, varying noise samples")
+# plt.grid(True)
+# plt.show()
+# plt.savefig("plot.png")
 
 # L, U = res["L"], res["U"]
-
 # proj_L = defaultdict(float); proj_U = defaultdict(float)
 # for (s, q), v in L.items(): proj_L[s] = max(proj_L[s], v)
 # for (s, q), v in U.items(): proj_U[s] = max(proj_U[s], v)
