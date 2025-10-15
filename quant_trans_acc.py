@@ -387,7 +387,6 @@ def quantitative_buchi_imdp(P, eps: float = 1e-3):
 
 
 
-
 def update_csv_reslt(csv_path, address, res):
     rows = []
     with csv_path.open(newline='', encoding='utf-8') as f:
@@ -395,11 +394,20 @@ def update_csv_reslt(csv_path, address, res):
         fieldnames = reader.fieldnames
         rows = list(reader)
 
+    row_found = False
     for row in rows:
         if row["address"].strip() == address:
             row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
             row["Convergence_iteration"] = str(res["Convergence_iteration"])
+            row_found = True
             break
+
+    if not row_found:
+        new_row = {fn: "" for fn in fieldnames}
+        new_row["address"] = address
+        new_row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
+        new_row["Convergence_iteration"] = str(res["Convergence_iteration"])
+        rows.append(new_row)
 
     with csv_path.open("w", newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
