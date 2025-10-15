@@ -401,11 +401,20 @@ def update_csv_reslt(csv_path, address, res):
         fieldnames = reader.fieldnames
         rows = list(reader)
 
+    row_found = False
     for row in rows:
         if row["address"].strip() == address:
             row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
             row["Convergence_iteration"] = str(res["Convergence_iteration"])
+            row_found = True
             break
+
+    if not row_found:
+        new_row = {fn: "" for fn in fieldnames}
+        new_row["address"] = address
+        new_row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
+        new_row["Convergence_iteration"] = str(res["Convergence_iteration"])
+        rows.append(new_row)
 
     with csv_path.open("w", newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -462,7 +471,7 @@ def plot_x(results, x_var, y_var, title):
 
 
 
-run_imdp()
+run_imdp(address='Ab_UAV_10-14-2025_16-35-35', noise_samples=3200)
 
 # con, val, variable = "timebound", "64", "Noise Samples"
 # results = constants_vs_var(con, val, variable)
@@ -482,12 +491,12 @@ run_imdp()
 # results = constants_vs_var(con, val, variable)
 # plot_x(results, variable, "Execution_time_sec", con, val)
 
-con, val, variable = "timebound", "64", "Transitions"
-results = constants_vs_var(con, val, variable)
-title = f"Execution_time_sec vs {variable} ({con}={val})"
-plot_x(results, variable, "Execution_time_sec", title)
+# con, val, variable = "timebound", "64", "Transitions"
+# results = constants_vs_var(con, val, variable)
+# title = f"Execution_time_sec vs {variable} ({con}={val})"
+# plot_x(results, variable, "Execution_time_sec", title)
 
-a = 5
+# a = 5
 
 
 
