@@ -7,6 +7,10 @@ import csv
 from pathlib import Path
 
 
+import sys
+sys.setrecursionlimit(200000)
+
+
 sta = "Abstraction_interval.sta"
 lab = "Abstraction_interval.lab"
 tra = "Abstraction_interval.tra"
@@ -97,6 +101,17 @@ def load_tra_align(path_tra: str, remap: Dict[int,int]):
             trans[(s, a)][sp] = (l, u)
     return actions, trans
 
+
+
+def check_intervals(intervals: Dict[Tuple[State, Action], Dict[State, Tuple[float, float]]]):
+    for (s, a), outs in intervals.items():
+        for l, u in outs.values():
+            if u > 0 and l == 0:
+                return False
+    return True
+
+
+
 def imdp_from_files_quant(sta_path: str, lab_path: str, tra_path: str, I) -> Dict[str, Set[int]]:
     # I is an instance of your IMDP() class from quant (1).py
     remap, n_states = load_sta_align(sta_path)
@@ -104,6 +119,14 @@ def imdp_from_files_quant(sta_path: str, lab_path: str, tra_path: str, I) -> Dic
     I.states.update([i for i in range(n_states)])
     I.label, goal, avoid, init, AtomicP = load_lab_align(lab_path, remap)
     I.actions, I.intervals = load_tra_align(tra_path, remap)
+    is_SMDP = check_intervals(I.intervals)
+    if not is_SMDP:
+        raise ValueError("Some transition has upper > 0 but lower = 0")
+    print("good")
+
+
+    
+
     return {"reached": goal, "avoid": avoid, "init": init}, AtomicP
 
 
@@ -437,14 +460,20 @@ def update_csv_reslt(csv_path, address, res):
 def run_imdp(address, noise_samples):
     is_row_already_calced = row_already_calced(csv_path, address)
     if is_row_already_calced:
+        print(address)
+        print("^ already calced")
         return
     base = root_models / address / f"N={noise_samples}_0"
     sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
     I = IMDP()
+    print('WILL read the data')
     _, _ = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
+    print('data is read')
     all_labsets = {I.label[s] for s in I.states}
     B = buchi_reach(all_labsets)
+    print('will build product')
     P = Product(I, B)
+    print('product is build')
     res = quantitative_buchi_imdp(P, eps=1e-3)
     update_csv_reslt(csv_path, address, res)
 
@@ -485,9 +514,52 @@ def plot_x(results, x_var, y_var, title):
 
 
 
-run_imdp(address='Ab_UAV_10-10-2025_10-23-42', noise_samples=20000)
 
-# con, val, variable = "timebound", "64", "Noise Samples"
+# con, val, variable = "timebound", "32", "Monte Carlo Iter"
+
+
+
+
+adds = [
+'Ab_UAV_10-16-2025_13-57-21',
+'Ab_UAV_10-16-2025_15-11-36',
+'Ab_UAV_10-16-2025_15-16-07',
+'Ab_UAV_10-16-2025_15-25-59',
+'Ab_UAV_10-16-2025_15-29-37'
+]
+
+
+for address in adds:
+    print(address)
+    run_imdp(address, 20000)
+
+
+con, val, variable = "_", "_", "Num States"
+results = []  # will hold dicts: {address, noise_samples, res}
+
+for add in adds:
+    with csv_path.open(newline='', encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row["address"].strip() == add:
+                noise_samples = int(float(row["Noise Samples"]))
+                variable_val = float(row[variable])
+                results.append({variable: variable_val,
+                                "Execution_time_sec": float(row["Execution_time_sec"]),
+                                "Convergence_iteration": int(row["Convergence_iteration"]),})
+
+
+title = f"Execution_time_sec vs {variable} ({con}={val}) v1"
+plot_x(results, variable, "Execution_time_sec", title)
+
+
+
+
+# for add in adds:
+#     run_imdp(address=add, noise_samples=3200)
+
+
+
 # results = constants_vs_var(con, val, variable)
 # del results[0]
 # del results[1]
@@ -505,10 +577,6 @@ run_imdp(address='Ab_UAV_10-10-2025_10-23-42', noise_samples=20000)
 # results = constants_vs_var(con, val, variable)
 # plot_x(results, variable, "Execution_time_sec", con, val)
 
-# con, val, variable = "timebound", "64", "Transitions"
-# results = constants_vs_var(con, val, variable)
-# title = f"Execution_time_sec vs {variable} ({con}={val})"
-# plot_x(results, variable, "Execution_time_sec", title)
 
 # a = 5
 
