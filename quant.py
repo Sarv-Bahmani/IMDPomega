@@ -394,6 +394,17 @@ def buchi_reach(all_labsets):
     return B
 
 
+
+
+def row_already_calced(csv_path, address):
+    with csv_path.open(newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row["address"].strip() == address and row["Execution_time_sec"] != "":
+                return True
+    return False
+
+
 def update_csv_reslt(csv_path, address, res):
     rows = []
     with csv_path.open(newline='', encoding='utf-8') as f:
@@ -424,6 +435,9 @@ def update_csv_reslt(csv_path, address, res):
 
 
 def run_imdp(address, noise_samples):
+    row_already_calced = row_already_calced(csv_path, address)
+    if row_already_calced:
+        return
     base = root_models / address / f"N={noise_samples}_0"
     sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
     I = IMDP()
@@ -467,11 +481,11 @@ def plot_x(results, x_var, y_var, title):
     plt.title(title)
     plt.grid(True)
     plt.show()
-    plt.savefig(f"{x_var}.png")
+    plt.savefig(f"{title}.png")
 
 
 
-run_imdp(address='Ab_UAV_10-14-2025_16-35-35', noise_samples=3200)
+run_imdp(address='Ab_UAV_10-16-2025_09-24-03', noise_samples=20000)
 
 # con, val, variable = "timebound", "64", "Noise Samples"
 # results = constants_vs_var(con, val, variable)
