@@ -435,8 +435,8 @@ def update_csv_reslt(csv_path, address, res):
 
 
 def run_imdp(address, noise_samples):
-    row_already_calced = row_already_calced(csv_path, address)
-    if row_already_calced:
+    is_row_already_calced = row_already_calced(csv_path, address)
+    if is_row_already_calced:
         return
     base = root_models / address / f"N={noise_samples}_0"
     sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
@@ -466,7 +466,7 @@ def constants_vs_var(con, val, variable): #cons: Dict{con:str, val:str}
             results.append({variable: variable_val,
                             "Execution_time_sec": float(row["Execution_time_sec"]),
                             "Convergence_iteration": int(row["Convergence_iteration"]),})
-            print(f"{address}", results[-1])
+            # print(f"{address}", results[-1])
         return results
 
 
