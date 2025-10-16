@@ -536,7 +536,7 @@ for address in adds:
     run_imdp(address, 20000)
 
 
-con, val, variable = "Noise Sample", "20000", "Num States"
+con, val, variable = "Noise Sample", "20000", "Transitions"
 results = []  # will hold dicts: {address, noise_samples, res}
 
 for add in adds:
@@ -545,13 +545,14 @@ for add in adds:
         for row in reader:
             if row["address"].strip() == add:
                 noise_samples = int(float(row["Noise Samples"]))
-                variable_val = float(row[variable])
+                variable_val = int(row[variable])
                 results.append({variable: variable_val,
-                                "Execution_time_sec": float(row["Execution_time_sec"]),
-                                "Convergence_iteration": int(row["Convergence_iteration"]),})
+                                # "Execution_time_sec": float(row["Execution_time_sec"]),
+                                # "Convergence_iteration": int(row["Convergence_iteration"]),
+                                })
 
 
-title = f"Execution_time_sec vs {variable} ({con}={val}) v1"
+title = f"Execution_time_sec vs {variable} ({con}={val}) v22"
 plot_x(results, variable, "Execution_time_sec", title)
 
 
