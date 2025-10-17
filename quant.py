@@ -499,23 +499,17 @@ def constants_vs_var(con, val, variable): #cons: Dict{con:str, val:str}
         return results
 
 
-def plot_x(results, x_var, y_var, title):
+def plot_x(results, x_var, y_var, pic_name):
     results.sort(key=lambda d: d[x_var])
-    xs = [d[x_var] for d in results]
+    xs = [d[x_var]/1000000 for d in results]
     ys = [d[y_var] for d in results]
     plt.figure()
     plt.plot(xs, ys, marker="o")
-    plt.xlabel(x_var)
-    # plt.ylabel("Quantitative Büchi (robust) value")
-    plt.title(title)
+    plt.xlabel("Million Transitions")
     plt.grid(True)
     plt.show()
-    plt.savefig(f"{title}.png")
+    plt.savefig(f"{pic_name}.png")
 
-
-
-
-# con, val, variable = "timebound", "32", "Monte Carlo Iter"
 
 
 
@@ -530,44 +524,60 @@ adds = [
 ]
 
 
+results = []
 
-for address in adds:
-    print(address)
-    run_imdp(address, 20000)
-
-
-con, val, variable = "Noise Sample", "20000", "Transitions"
-results = []  # will hold dicts: {address, noise_samples, res}
+variable = "Transitions"
 
 for add in adds:
     with csv_path.open(newline='', encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             if row["address"].strip() == add:
-                noise_samples = int(float(row["Noise Samples"]))
-                variable_val = int(row[variable])
+                variable_val = float(int(row[variable]))
                 results.append({variable: variable_val,
-                                # "Execution_time_sec": float(row["Execution_time_sec"]),
-                                # "Convergence_iteration": int(row["Convergence_iteration"]),
+                                "Execution_time_sec": float(row["Execution_time_sec"]),
                                 })
 
-
-title = f"Execution_time_sec vs {variable} ({con}={val}) v22"
+title = f"Execution_time_sec vs Transitions (Noise Sample=20000) v1"
 plot_x(results, variable, "Execution_time_sec", title)
 
 
 
 
+
+
+# con, val, variable = "timebound", "32", "Monte Carlo Iter"
+
+# for address in adds:
+#     print(address)
+#     run_imdp(address, 20000)
+
+
+# con, val, variable = "Noise Sample", "20000", "Transitions"
+# results = []  # will hold dicts: {address, noise_samples, res}
+
+# for add in adds:
+#     with csv_path.open(newline='', encoding="utf-8") as f:
+#         reader = csv.DictReader(f)
+#         for row in reader:
+#             if row["address"].strip() == add:
+#                 noise_samples = int(float(row["Noise Samples"]))
+#                 variable_val = int(row[variable])
+#                 results.append({variable: variable_val,
+#                                 # "Execution_time_sec": float(row["Execution_time_sec"]),
+#                                 # "Convergence_iteration": int(row["Convergence_iteration"]),
+#                                 })
+
+# title = f"Execution_time_sec vs {variable} ({con}={val}) v22"
+# plot_x(results, variable, "Execution_time_sec", title)
+
 # for add in adds:
 #     run_imdp(address=add, noise_samples=3200)
-
-
 
 # results = constants_vs_var(con, val, variable)
 # del results[0]
 # del results[1]
 # plot_x(results, variable, "Execution_time_sec", con, val)
-
 
 # con, val, variable = "timebound", "64", "Transitions"
 # results = constants_vs_var(con, val, variable)
@@ -580,8 +590,5 @@ plot_x(results, variable, "Execution_time_sec", title)
 # results = constants_vs_var(con, val, variable)
 # plot_x(results, variable, "Execution_time_sec", con, val)
 
-
 # a = 5
-
-
 

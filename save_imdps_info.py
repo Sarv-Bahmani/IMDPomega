@@ -43,16 +43,14 @@ def append_row(csv_path: Path, row: dict):
 
 
 
-
-
-address = 'Ab_UAV_10-16-2025_09-24-03'
+address = 'Ab_UAV_10-16-2025_20-48-14'
 run = {
     "address": address,
     "PRISM Path": "/home/sarv/SarvWork/prism/prism/prism/bin/prism",
     "Model File": "JAIR22_models",
     "Model Name": "UAV",
-    "timebound": 32,
-    "Monte Carlo Iter": 1000,
+    "timebound": "inf",
+    "Monte Carlo Iter": 0,
     "x_init": [],
     "Noise Samples": 20000,
     "Confidence": 1e-08,
@@ -76,19 +74,19 @@ run = {
     "Enabled (init)": "",
     "Deadlocks": 128,
     "PRISM Ver": "4.8.1",
-    "Property": 'Pmaxmin=? [ F<=16 "reached" ]',
-    "PRISM Iter": 16,
+    "Property": 'Pmaxmin=? [ F "reached" ]',
+    "PRISM Iter": 25,
     "Range (init states)": [0.0, 1.0],
     "Final Result": [0.0, 1.0],
-    "DefAct (s)": 0.093,
-    "ProbCalc (s)": 15.917,
-    "Export (s)": 1.942,
-    "Build (s)": 0.669,
-    "Check (s)": 1.077,
-    "Total (s)": 2.734,
+    "DefAct (s)": 0.132,
+    "ProbCalc (s)": 16.232,
+    "Export (s)": 2.064,
+    "Build (s)": 0.735,
+    "Check (s)": 1.751,
+    "Total (s)": 4.318,
     "MC Init": "",
-    "MC Summary": "MC over all states (auto)",
-    "Warnings": "Deadlocks fixed in 128 states; total 2 warnings",
+    "MC Summary": "",
+    "Warnings": "Switched to explicit engine; deadlocks fixed in 128 states; total 2 warnings",
     **_default_env(),
     "Execution_time_sec": "",
     "Convergence_iteration": ""
@@ -97,6 +95,8 @@ run = {
 
 csv_path = Path("gen_imdp_info/IMDPs_info.csv")
 append_row(csv_path, run)
+
+
 
 
 # csv_path = Path("gen_imdp_info/IMDPs_info.csv")
