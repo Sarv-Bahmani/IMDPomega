@@ -164,6 +164,7 @@ class Product:
         self.imdp = imdp
         self.buchi = buchi
         self.states: Set[ProdState] = set()
+        self.init_states: Set[ProdState] = set()
         self.actions: Dict[ProdState, Set[Action]] = defaultdict(set)
         self.trans_prod: Dict[Tuple[ProdState, Action], Dict[ProdState, Tuple[float, float]]] = {}
         self.acc_states: Set[ProdState] = set()
@@ -186,6 +187,9 @@ class Product:
                 self.states.add(ps)
                 if q in self.buchi.acc:
                     self.acc_states.add(ps)
+                if "init" in s.label:
+                    if q == self.buchi.q0:
+                        self.init_states.add(ps)
 
         for (s, q) in set(self.states):
             self.trans_update(s, q)
@@ -351,11 +355,37 @@ def max_expectation_for_action(intervals_list: List[Tuple[ProdState, float, floa
         r -= add
     return exp
 
+
+
+
+def calc_init_mean(P, L, U):
+    mean_i_L = []
+    mean_i_U = []
+
+    for (s, q) in P.init_states:
+        mean_i_L.append(L[(s, q)])
+        mean_i_U.append(U[(s, q)])
+    mean_L = sum(mean_i_L) / len(mean_i_L) if mean_i_L else 0.0
+    mean_U = sum(mean_i_U) / len(mean_i_U) if mean_i_U else 0.0
+    return mean_L, mean_U
+
+
+
+
+
 def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
     L: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
     U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
+    mean_L_list, mean_U_list = [], [] 
 
     for iterator in range(max_iter):
+
+        if iterator % 5 == 0 and iterator > 0:
+            mean_L, mean_U = calc_init_mean(P, L, U)
+            mean_L_list.append(mean_L)
+            mean_U_list.append(mean_U)
+
+
         deltaL = 0.0
         deltaU = 0.0
 
@@ -390,13 +420,15 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
             # print("breakkkkkk Converged at iteration", iterator)
             break
 
-    return L, U, iterator
+    return L, U, iterator, mean_L_list, mean_U_list
 
 def quantitative_buchi_imdp(P, eps: float = 1e-3):
     start_time = time.perf_counter()
-    L, U, iterator = interval_iteration(P, P.target, eps=eps)
+    L, U, iterator, mean_L_list, mean_U_list  = interval_iteration(P, P.target, eps=eps)
     execution_time = time.perf_counter() - start_time
     return {
+        "mean_L_list": mean_L_list,
+        "mean_U_list": mean_U_list,
         "L": L,   
         "U": U,
         "Convergence_iteration": iterator,
@@ -476,6 +508,7 @@ def run_imdp(address, noise_samples):
     print('product is build')
     res = quantitative_buchi_imdp(P, eps=1e-3)
     update_csv_reslt(csv_path, address, res)
+    return res
 
 
 
