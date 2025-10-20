@@ -187,7 +187,7 @@ class Product:
                 self.states.add(ps)
                 if q in self.buchi.acc:
                     self.acc_states.add(ps)
-                if "init" in s.label:
+                if "init" in self.imdp.label[s] and not "failed" in self.imdp.label[s]:
                     if q == self.buchi.q0:
                         self.init_states.add(ps)
 
@@ -319,6 +319,13 @@ class Product:
         return Region
 
 
+    def losing_sink(self, SCC: Set[ProdState]) -> bool:
+        for s in SCC:
+            for a in self.actions.get(s, ()):
+                pass
+
+
+
 def min_expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
     base = 0.0
     residual = 1.0
@@ -381,6 +388,8 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
     for iterator in range(max_iter):
 
         if iterator % 5 == 0 and iterator > 0:
+            if iterator == 100:
+                print("Iteration:", iterator)
             mean_L, mean_U = calc_init_mean(P, L, U)
             mean_L_list.append(mean_L)
             mean_U_list.append(mean_U)
@@ -435,18 +444,39 @@ def quantitative_buchi_imdp(P, eps: float = 1e-3):
         "Execution_time_sec": execution_time
     }
 
-def buchi_reach(all_labsets):
-    B = BuchiA({tok for S in all_labsets for tok in S})
-    B.add_state(0, initial=True)
-    B.add_state(1, accepting=True)
-    for labset in all_labsets:
-        if "reached" in labset:
-            B.add_edge(0, labset, 1)
-            B.add_edge(1, labset, 1)
-        else:
-            B.add_edge(0, labset, 0)
-            B.add_edge(1, labset, 1)
+# def buchi_reach(all_labsets):
+#     B = BuchiA({tok for S in all_labsets for tok in S})
+#     B.add_state(0, initial=True)
+#     B.add_state(1, accepting=True)
+#     for labset in all_labsets:
+#         if "reached" in labset:
+#             B.add_edge(0, labset, 1)
+#             B.add_edge(1, labset, 1)
+#         else:
+#             B.add_edge(0, labset, 0)
+#             B.add_edge(1, labset, 1)
+#     return B
+
+
+def buchi_reach(all_labsets): 
+    B = BuchiA({tok for S in all_labsets for tok in S}) 
+    B.add_state(0, initial=True) 
+    B.add_state(1, accepting=True) 
+    B.add_state(2) 
+    for labset in all_labsets: 
+        B.add_edge(2, labset, 2) 
+        if "failed" in labset: 
+            B.add_edge(0, labset, 2) 
+            B.add_edge(1, labset, 2) 
+        elif "reached" in labset: # and not "deadlock" in labset and not "failed" in labset: 
+            B.add_edge(0, labset, 1) 
+            B.add_edge(1, labset, 1) 
+        else: 
+            B.add_edge(0, labset, 0) 
+            B.add_edge(1, labset, 1) 
     return B
+
+
 
 
 
@@ -480,6 +510,7 @@ def update_csv_reslt(csv_path, address, res):
         new_row["address"] = address
         new_row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
         new_row["Convergence_iteration"] = str(res["Convergence_iteration"])
+        new_row["Noise Samples"] = str(20000)
         rows.append(new_row)
 
     with csv_path.open("w", newline='', encoding='utf-8') as f:
@@ -494,7 +525,7 @@ def run_imdp(address, noise_samples):
     if is_row_already_calced:
         print(address)
         print("^ already calced")
-        return
+        # return
     base = root_models / address / f"N={noise_samples}_0"
     sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
     I = IMDP()
@@ -512,14 +543,14 @@ def run_imdp(address, noise_samples):
 
 
 
-def constants_vs_var(con, val, variable): #cons: Dict{con:str, val:str}
+def constants_vs_var(variable): #cons: Dict{con:str, val:str}
     results = []  # will hold dicts: {address, noise_samples, res}
     with csv_path.open(newline='', encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            try:
-                if (row[con]) != val: continue
-            except: continue
+            # try:
+            #     if (row[con]) != val: continue
+            # except: continue
             address = row["address"].strip()
             noise_samples = int(float(row["Noise Samples"]))
             if row["Execution_time_sec"] == "":
@@ -527,18 +558,19 @@ def constants_vs_var(con, val, variable): #cons: Dict{con:str, val:str}
             variable_val = float(row[variable])
             results.append({variable: variable_val,
                             "Execution_time_sec": float(row["Execution_time_sec"]),
-                            "Convergence_iteration": int(row["Convergence_iteration"]),})
+                            # "Convergence_iteration": int(row["Convergence_iteration"]),
+                            })
             # print(f"{address}", results[-1])
         return results
 
 
 def plot_x(results, x_var, y_var, pic_name):
     results.sort(key=lambda d: d[x_var])
-    xs = [d[x_var]/1000000 for d in results]
+    xs = [d[x_var]/1000 for d in results]
     ys = [d[y_var] for d in results]
     plt.figure()
     plt.plot(xs, ys, marker="o")
-    plt.xlabel("Million Transitions")
+    plt.xlabel("Thousand Transitions")
     plt.grid(True)
     plt.show()
     plt.savefig(f"{pic_name}.png")
@@ -547,48 +579,64 @@ def plot_x(results, x_var, y_var, pic_name):
 
 
 
-adds = [
-'Ab_UAV_10-16-2025_20-48-14',
-'Ab_UAV_10-16-2025_13-57-21',
-'Ab_UAV_10-16-2025_15-11-36',
-'Ab_UAV_10-16-2025_15-16-07',
-'Ab_UAV_10-16-2025_15-25-59',
-'Ab_UAV_10-16-2025_15-29-37'
-]
+# adds = [
+# 'Ab_UAV_10-16-2025_20-48-14',
+# # 'Ab_UAV_10-16-2025_13-57-21',
+# # 'Ab_UAV_10-16-2025_15-11-36',
+# # 'Ab_UAV_10-16-2025_15-16-07',
+# # 'Ab_UAV_10-16-2025_15-25-59',
+# # 'Ab_UAV_10-16-2025_15-29-37'
+# ]
+
+
+# results = []
+
+# variable = "Transitions"
+
+# # mean_L_list_add, mean_U_list_add = [], [] 
+
+# for add in adds:
+#     res = run_imdp(address=add, noise_samples=20000)
+#     mean_L_list = res["mean_L_list"]
+#     mean_U_list = res["mean_U_list"]
+
+
+
+
+
+
+
+# x_values = list(range(0, len(mean_L_list) * 5, 5))
+
+# plt.plot(x_values, mean_L_list, marker='o', label='Mean L (Lower bound)')
+# plt.plot(x_values, mean_U_list, marker='s', label='Mean U (Upper bound)')
+
+# plt.xlabel('Iterations')
+# plt.ylabel('Probability')
+# plt.title('Evolution of Mean Lower bound and Upper bound from Init states during Value Iteration')
+# plt.grid(True, linestyle='--', alpha=0.6)
+# plt.legend()
+# plt.tight_layout()
+# plt.show()
+# plt.savefig("min-max-range.png")
+
+
+
+
+
+# for add in adds:
+#     with csv_path.open(newline='', encoding="utf-8") as f:
+#         reader = csv.DictReader(f)
+#         for row in reader:
+#             if row["address"].strip() == add:
+#                 variable_val = float(int(row[variable]))
+#                 results.append({variable: variable_val,
+#                                 "Execution_time_sec": float(row["Execution_time_sec"]),
+#                                 })
+
 
 
 results = []
-
-variable = "Transitions"
-
-for add in adds:
-    with csv_path.open(newline='', encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            if row["address"].strip() == add:
-                variable_val = float(int(row[variable]))
-                results.append({variable: variable_val,
-                                "Execution_time_sec": float(row["Execution_time_sec"]),
-                                })
-
-title = f"Execution_time_sec vs Transitions (Noise Sample=20000) v1"
-plot_x(results, variable, "Execution_time_sec", title)
-
-
-
-
-
-
-# con, val, variable = "timebound", "32", "Monte Carlo Iter"
-
-# for address in adds:
-#     print(address)
-#     run_imdp(address, 20000)
-
-
-# con, val, variable = "Noise Sample", "20000", "Transitions"
-# results = []  # will hold dicts: {address, noise_samples, res}
-
 # for add in adds:
 #     with csv_path.open(newline='', encoding="utf-8") as f:
 #         reader = csv.DictReader(f)
@@ -597,31 +645,13 @@ plot_x(results, variable, "Execution_time_sec", title)
 #                 noise_samples = int(float(row["Noise Samples"]))
 #                 variable_val = int(row[variable])
 #                 results.append({variable: variable_val,
-#                                 # "Execution_time_sec": float(row["Execution_time_sec"]),
+#                                 "Execution_time_sec": float(row["Execution_time_sec"]),
 #                                 # "Convergence_iteration": int(row["Convergence_iteration"]),
 #                                 })
 
-# title = f"Execution_time_sec vs {variable} ({con}={val}) v22"
-# plot_x(results, variable, "Execution_time_sec", title)
 
-# for add in adds:
-#     run_imdp(address=add, noise_samples=3200)
+results = constants_vs_var("Transitions")
+plot_x(results, "Transitions", "Execution_time_sec", "transition_vs_time")
 
-# results = constants_vs_var(con, val, variable)
-# del results[0]
-# del results[1]
-# plot_x(results, variable, "Execution_time_sec", con, val)
 
-# con, val, variable = "timebound", "64", "Transitions"
-# results = constants_vs_var(con, val, variable)
-# del results[0]
-# del results[1]
-# plot_x(results, variable, "Execution_time_sec", con, val)
-#
-
-# con, val, variable = "Transitions", "417998", "timebound"
-# results = constants_vs_var(con, val, variable)
-# plot_x(results, variable, "Execution_time_sec", con, val)
-
-# a = 5
 
