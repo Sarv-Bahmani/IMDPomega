@@ -313,7 +313,44 @@ class Product:
 
 
 
-def min_expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
+# def min_expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
+#     base = 0.0
+#     residual = 1.0
+#     items: List[Tuple[ProdState, float, float, float]] = []  # (y,l,u,V[y])
+#     for y, l, u in intervals_list:
+#         base += l * V.get(y, 0.0)
+#         residual -= l
+#         items.append((y, l, u, V.get(y, 0.0)))
+#     items.sort(key=lambda t: t[3])  # ascending V
+#     exp = base
+#     r = max(0.0, residual)
+#     for y, l, u, vy in items:
+#         if r <= 0: break
+#         add = min(u - l, r)
+#         exp += add * vy
+#         r -= add
+#     return exp
+
+# def max_expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
+#     base = 0.0
+#     residual = 1.0
+#     items: List[Tuple[ProdState, float, float, float]] = []
+#     for y, l, u in intervals_list:
+#         base += l * V.get(y, 0.0)
+#         residual -= l
+#         items.append((y, l, u, V.get(y, 0.0)))
+#     items.sort(key=lambda t: -t[3])  # descending V
+#     exp = base
+#     r = max(0.0, residual)
+#     for y, l, u, vy in items:
+#         if r <= 0: break
+#         add = min(u - l, r)
+#         exp += add * vy
+#         r -= add
+#     return exp
+
+
+def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
     base = 0.0
     residual = 1.0
     items: List[Tuple[ProdState, float, float, float]] = []  # (y,l,u,V[y])
@@ -330,25 +367,6 @@ def min_expectation_for_action(intervals_list: List[Tuple[ProdState, float, floa
         exp += add * vy
         r -= add
     return exp
-
-def max_expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
-    base = 0.0
-    residual = 1.0
-    items: List[Tuple[ProdState, float, float, float]] = []
-    for y, l, u in intervals_list:
-        base += l * V.get(y, 0.0)
-        residual -= l
-        items.append((y, l, u, V.get(y, 0.0)))
-    items.sort(key=lambda t: -t[3])  # descending V
-    exp = base
-    r = max(0.0, residual)
-    for y, l, u, vy in items:
-        if r <= 0: break
-        add = min(u - l, r)
-        exp += add * vy
-        r -= add
-    return exp
-
 
 
 
@@ -369,7 +387,8 @@ def calc_init_mean(P, L, U):
 
 def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
     L: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
-    U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
+    # U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
+    U: Dict[ProdState, float] = {x: 1.0 for x in P.states}
     mean_L_list, mean_U_list = [], [] 
 
     for iterator in range(max_iter):
@@ -400,8 +419,8 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
                     if not iv:
                         continue
                     iv_list = [(y, l, u) for y, (l, u) in iv.items()]
-                    mexp = min_expectation_for_action(iv_list, L)
-                    Mexp = max_expectation_for_action(iv_list, U)
+                    mexp = expectation_for_action(iv_list, L)
+                    Mexp = expectation_for_action(iv_list, U)
                     best_min = mexp if best_min is None else max(best_min, mexp)
                     best_max = Mexp if best_max is None else max(best_max, Mexp)
                 newL = best_min if best_min is not None else 0.0
