@@ -551,12 +551,6 @@ adds = [
 ]
 
 
-
-
-
-
-# # mean_L_list_add, mean_U_list_add = [], [] 
-
 # for add in adds:
 #     res = run_imdp(address=add, noise_samples=20000)
 #     mean_L_list = res["mean_L_list"]
@@ -564,20 +558,15 @@ adds = [
 
 # x_values = list(range(0, len(mean_L_list) * 5, 5))
 
-# plt.plot(x_values, mean_L_list, marker='o', label='Mean L (Lower bound)')
-# plt.plot(x_values, mean_U_list, marker='s', label='Mean U (Upper bound)')
+# plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
+# plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
 
 # plt.xlabel('Iterations')
 # plt.ylabel('Probability')
-# plt.title('Evolution of Mean Lower bound and Upper bound from Init states during Value Iteration')
 # plt.grid(True, linestyle='--', alpha=0.6)
 # plt.legend()
 # plt.tight_layout()
-# plt.show()
-# plt.savefig("min-max-range.png")
-
-
-
+# plt.savefig("Evolution_MeanL_MeanU_InitSt_VI.png")
 
 
 
