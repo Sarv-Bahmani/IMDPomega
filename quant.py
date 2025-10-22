@@ -516,6 +516,19 @@ def run_imdp(address, noise_samples):
 
 
 
+
+def constants_vs_var(adds, variable):
+    results = []
+    for add in adds:
+        with csv_path.open(newline='', encoding="utf-8") as f:
+            rows = csv.DictReader(f)
+            for row in rows:
+                if row["address"].strip() == add:
+                    variable_val = float(row[variable])
+                    results.append({variable: variable_val, "Execution_time_sec": float(row["Execution_time_sec"])})
+
+
+
 def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
     results.sort(key=lambda d: d[x_var])
     xs = [d[x_var]/unit for d in results]
@@ -525,28 +538,6 @@ def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
     plt.xlabel(x_lab)
     plt.grid(True)
     plt.savefig(f"{pic_name}.png")
-
-
-
-
-
-def constants_vs_var(variable): #cons: Dict{con:str, val:str}
-    results = []  # will hold dicts: {address, noise_samples, res}
-    with csv_path.open(newline='', encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            # try:
-            #     if (row[con]) != val: continue
-            # except: continue
-            address = row["address"].strip()
-            noise_samples = int(float(row["Noise Samples"]))
-            if row["Execution_time_sec"] == "":
-                run_imdp(address, noise_samples)
-            variable_val = float(row[variable])
-            results.append({variable: variable_val,
-                            "Execution_time_sec": float(row["Execution_time_sec"]),
-                            })
-        return results
 
 
 
@@ -560,9 +551,9 @@ adds = [
 ]
 
 
-# results = []
 
-# variable = "Transitions"
+
+
 
 # # mean_L_list_add, mean_U_list_add = [], [] 
 
@@ -570,12 +561,6 @@ adds = [
 #     res = run_imdp(address=add, noise_samples=20000)
 #     mean_L_list = res["mean_L_list"]
 #     mean_U_list = res["mean_U_list"]
-
-
-
-
-
-
 
 # x_values = list(range(0, len(mean_L_list) * 5, 5))
 
@@ -594,35 +579,6 @@ adds = [
 
 
 
-
-# for add in adds:
-#     with csv_path.open(newline='', encoding="utf-8") as f:
-#         reader = csv.DictReader(f)
-#         for row in reader:
-#             if row["address"].strip() == add:
-#                 variable_val = float(int(row[variable]))
-#                 results.append({variable: variable_val,
-#                                 "Execution_time_sec": float(row["Execution_time_sec"]),
-#                                 })
-
-
-
-results = []
-# for add in adds:
-#     with csv_path.open(newline='', encoding="utf-8") as f:
-#         reader = csv.DictReader(f)
-#         for row in reader:
-#             if row["address"].strip() == add:
-#                 noise_samples = int(float(row["Noise Samples"]))
-#                 variable_val = int(row[variable])
-#                 results.append({variable: variable_val,
-#                                 "Execution_time_sec": float(row["Execution_time_sec"]),
-#                                 # "Convergence_iteration": int(row["Convergence_iteration"]),
-#                                 })
-
-
-results = constants_vs_var("Transitions")
-plot_x(results, "Transitions", "Execution_time_sec", "transition_vs_time")
 
 
 
