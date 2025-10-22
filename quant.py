@@ -566,7 +566,7 @@ adds = [
 # plt.grid(True, linestyle='--', alpha=0.6)
 # plt.legend()
 # plt.tight_layout()
-# plt.savefig("Evolution_MeanL_MeanU_InitSt_VI.png")
+# plt.savefig(f"Evolution_MeanL_MeanU_InitSt_VI_{add}.png")
 
 
 
