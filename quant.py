@@ -161,11 +161,13 @@ class Product:
         self.build_product()
         self.prod_graph()
 
+        start_time = time.perf_counter()
         self.mecs = self.mec_decomposition()
         self.aecs = self.aecs_from_mecs(self.mecs)
         self.target = set().union(*self.aecs) if self.aecs else set()
         self.win_region = self.almost_sure_winning(self.target)
-
+        execution_time = time.perf_counter() - start_time
+        self.qualitative_time_sec = execution_time
 
 
     def build_product(self):
@@ -196,11 +198,9 @@ class Product:
                 labset = self.imdp.label.get(s, frozenset())
                 next_qs = self.buchi.step(q, labset)
                 if not next_qs:
-                    # if your Büchi is total on labset, this won’t happen
                     continue
                 for q3 in next_qs:
                     ps = (s2, q3)
-                    # self.states.add(ps)
                     old = prod_outs.get(ps, (0.0, 0.0))
                     prod_outs[ps] = (old[0] + l, old[1] + u)
                     if q3 in self.buchi.acc:
@@ -312,42 +312,6 @@ class Product:
                 pass
 
 
-
-# def min_expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
-#     base = 0.0
-#     residual = 1.0
-#     items: List[Tuple[ProdState, float, float, float]] = []  # (y,l,u,V[y])
-#     for y, l, u in intervals_list:
-#         base += l * V.get(y, 0.0)
-#         residual -= l
-#         items.append((y, l, u, V.get(y, 0.0)))
-#     items.sort(key=lambda t: t[3])  # ascending V
-#     exp = base
-#     r = max(0.0, residual)
-#     for y, l, u, vy in items:
-#         if r <= 0: break
-#         add = min(u - l, r)
-#         exp += add * vy
-#         r -= add
-#     return exp
-
-# def max_expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
-#     base = 0.0
-#     residual = 1.0
-#     items: List[Tuple[ProdState, float, float, float]] = []
-#     for y, l, u in intervals_list:
-#         base += l * V.get(y, 0.0)
-#         residual -= l
-#         items.append((y, l, u, V.get(y, 0.0)))
-#     items.sort(key=lambda t: -t[3])  # descending V
-#     exp = base
-#     r = max(0.0, residual)
-#     for y, l, u, vy in items:
-#         if r <= 0: break
-#         add = min(u - l, r)
-#         exp += add * vy
-#         r -= add
-#     return exp
 
 
 def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
@@ -508,16 +472,18 @@ def update_csv_reslt(csv_path, address, res):
         if row["address"].strip() == address:
             row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
             row["Convergence_iteration"] = str(res["Convergence_iteration"])
+            row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
             row_found = True
             break
 
     if not row_found:
-        new_row = {fn: "" for fn in fieldnames}
-        new_row["address"] = address
-        new_row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
-        new_row["Convergence_iteration"] = str(res["Convergence_iteration"])
-        new_row["Noise Samples"] = str(20000)
-        rows.append(new_row)
+        row = {fn: "" for fn in fieldnames}
+        row["address"] = address
+        row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
+        row["Convergence_iteration"] = str(res["Convergence_iteration"])
+        row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
+        row["Noise Samples"] = str(20000)
+        rows.append(row)
 
     with csv_path.open("w", newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -544,8 +510,23 @@ def run_imdp(address, noise_samples):
     P = Product(I, B)
     print('product is build')
     res = quantitative_buchi_imdp(P, eps=1e-3)
+    res.update({"Qualitative_time_sec": P.qualitative_time_sec})
     update_csv_reslt(csv_path, address, res)
     return res
+
+
+
+def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
+    results.sort(key=lambda d: d[x_var])
+    xs = [d[x_var]/unit for d in results]
+    ys = [d[y_var] for d in results]
+    plt.figure()
+    plt.plot(xs, ys, marker="o")
+    plt.xlabel(x_lab)
+    plt.grid(True)
+    plt.savefig(f"{pic_name}.png")
+
+
 
 
 
@@ -564,35 +545,19 @@ def constants_vs_var(variable): #cons: Dict{con:str, val:str}
             variable_val = float(row[variable])
             results.append({variable: variable_val,
                             "Execution_time_sec": float(row["Execution_time_sec"]),
-                            # "Convergence_iteration": int(row["Convergence_iteration"]),
                             })
-            # print(f"{address}", results[-1])
         return results
 
 
-def plot_x(results, x_var, y_var, pic_name):
-    results.sort(key=lambda d: d[x_var])
-    xs = [d[x_var]/1000 for d in results]
-    ys = [d[y_var] for d in results]
-    plt.figure()
-    plt.plot(xs, ys, marker="o")
-    plt.xlabel("Thousand Transitions")
-    plt.grid(True)
-    plt.show()
-    plt.savefig(f"{pic_name}.png")
 
-
-
-
-
-# adds = [
-# 'Ab_UAV_10-16-2025_20-48-14',
-# # 'Ab_UAV_10-16-2025_13-57-21',
-# # 'Ab_UAV_10-16-2025_15-11-36',
-# # 'Ab_UAV_10-16-2025_15-16-07',
-# # 'Ab_UAV_10-16-2025_15-25-59',
-# # 'Ab_UAV_10-16-2025_15-29-37'
-# ]
+adds = [
+'Ab_UAV_10-16-2025_20-48-14',
+# 'Ab_UAV_10-16-2025_13-57-21',
+# 'Ab_UAV_10-16-2025_15-11-36',
+# 'Ab_UAV_10-16-2025_15-16-07',
+# 'Ab_UAV_10-16-2025_15-25-59',
+# 'Ab_UAV_10-16-2025_15-29-37'
+]
 
 
 # results = []
