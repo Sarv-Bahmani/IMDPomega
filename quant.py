@@ -101,16 +101,12 @@ def load_tra_align(path_tra: str, remap: Dict[int,int]):
             trans[(s, a)][sp] = (l, u)
     return actions, trans
 
-
-
 def check_intervals(intervals: Dict[Tuple[State, Action], Dict[State, Tuple[float, float]]]):
     for (s, a), outs in intervals.items():
         for l, u in outs.values():
             if u > 0 and l == 0:
                 return False
     return True
-
-
 
 def imdp_from_files_quant(sta_path: str, lab_path: str, tra_path: str, I) -> Dict[str, Set[int]]:
     # I is an instance of your IMDP() class from quant (1).py
@@ -122,22 +118,15 @@ def imdp_from_files_quant(sta_path: str, lab_path: str, tra_path: str, I) -> Dic
     is_SMDP = check_intervals(I.intervals)
     if not is_SMDP:
         raise ValueError("Some transition has upper > 0 but lower = 0")
-    print("good")
-
-
-    
 
     return {"reached": goal, "avoid": avoid, "init": init}, AtomicP
 
-
-
 class IMDP:
-    def __init__(self): #, filename):
+    def __init__(self):
         self.states: Set[State] = set()
         self.actions: Dict[State, Set[Action]] = defaultdict(set)
         self.intervals: Dict[Tuple[State, Action], Dict[State, Tuple[float, float]]] = {}
         self.label: Dict[State, Label] = {}
-
 
 class BuchiA:
     def __init__(self, ap: Set[str]):
@@ -187,7 +176,7 @@ class Product:
                 self.states.add(ps)
                 if q in self.buchi.acc:
                     self.acc_states.add(ps)
-                if "init" in self.imdp.label[s] and not "failed" in self.imdp.label[s]:
+                if "init" in self.imdp.label[s]: # and not "failed" in self.imdp.label[s]:
                     if q == self.buchi.q0:
                         self.init_states.add(ps)
 
@@ -195,7 +184,6 @@ class Product:
             self.trans_update(s, q)
 
       
-
 
     def trans_update(self, s, q):
         for a in self.imdp.actions.get(s, ()):
@@ -220,7 +208,6 @@ class Product:
             self.trans_prod[((s, q), a)] = prod_outs
 
 
-        
 
     def prod_graph(self):
         for (ps, a), outs in self.trans_prod.items():
@@ -424,9 +411,9 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
             deltaU = max(deltaU, abs(newU - U[x]))
             L[x], U[x] = newL, newU
 
-        # gap = max(U[x] - L[x] for x in P.states) if P.states else 0.0
-        if max(deltaL, deltaU) <= eps: # and gap <= eps:
-            # print("breakkkkkk Converged at iteration", iterator)
+        gap = max(U[x] - L[x] for x in P.states) if P.states else 0.0
+        if max(deltaL, deltaU) <= eps and gap <= eps:
+            print("breakkkkkk Converged at iteration", iterator)
             break
 
     return L, U, iterator, mean_L_list, mean_U_list
