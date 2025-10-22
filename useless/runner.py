@@ -1,17 +1,6 @@
 from elements import BuchiA, MDP, Product
 
 
-def qualitative_buchi_mdp(Product):
-    return {
-        "product_states": Product.states,
-        "AECs": Product.aecs,
-        "target_union": Product.target,
-        "winning_product_states": Product.win_region,
-    }
-
-
-
-
 if __name__ == "__main__":
     MDP = MDP()
     # s0, s1, s2, s3 = 0, 1, 2, 3
@@ -73,11 +62,6 @@ if __name__ == "__main__":
     MDP.trans_MDP[(s3, "safe")]   = {s3: 1.0}
 
 
-
-
-
-
-
     AP = {"g", "b"}
     Buchi = BuchiA(AP) # GF g
     Buchi.add_state(0, initial=True, accepting=False)   # q0
@@ -94,7 +78,13 @@ if __name__ == "__main__":
 
 
     Prod = Product(MDP, Buchi)
-    res = qualitative_buchi_mdp(Prod)
+    res = {
+        "product_states": Prod.states,
+        "AECs": Prod.aecs,
+        "target_union": Prod.target,
+        "winning_product_states": Prod.win_region}
+
+
     print("#product states:", len(res["product_states"]))
     print("#AECs:", len(res["AECs"]))
     print("winning |W|:", len(res["winning_product_states"]))
@@ -140,76 +130,3 @@ if __name__ == "__main__":
     # I.intervals[(s3, "safe")]   = {s3: (1.0, 1.0)}
 
 
-
-
-
-    # # AP = set(info.keys())
-    # # AP.update(["reached", "goal", "target", "failed", "deadlock", "unsafe", "bad", "init"])
-    # B = BuchiA(AP)
-    # B.add_state(0, initial=True)  # q0
-    # B.add_state(1, accepting=True)  # q1
-    # # labs = [frozenset({lab}) for lab in AP]
-    # for lab in AP:
-    #     if lab in {"reached","goal","target"}:
-    #         B.add_edge(0, frozenset({lab}), 1)
-    #         B.add_edge(1, frozenset({lab}), 1)
-    #     else:
-    #         B.add_edge(0, frozenset({lab}), 0)
-    #         B.add_edge(1, frozenset({lab}), 1)
-
-
-
-
-
-
-
-
-# results = []  # will hold dicts: {address, noise_samples, res}
-
-# with csv_path.open(newline='', encoding="utf-8") as f:
-#     reader = csv.DictReader(f)
-#     for row in reader:
-#         try:
-#             if int(row["timebound"]) != 64: continue
-#         except: continue
-
-#         address = row["address"].strip()
-#         noise_samples = int(float(row["Noise Samples"]))
-#         base = root_models / address / f"N={noise_samples}_0"
-#         sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
-
-#         if row["Execution_time_sec"] == "":
-#             I = IMDP()
-#             info, AP = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
-#             all_labsets = {I.label[s] for s in I.states}
-#             B = buchi_reach(all_labsets)
-#             P = Product(I, B)
-#             res = quantitative_buchi_imdp(P, eps=1e-3)
-#             update_csv_reslt(csv_path, res)
-
-#         results.append({"noise_samples": noise_samples,
-#                         "Execution_time_sec": row["Execution_time_sec"],
-#                         "Convergence_iteration": row["Convergence_iteration"],})
-#         print(f"{address}", results[-1])
-
-
-# results = constants_vs_var({"timebound": "64"}, "Noise Samples")
-
-# results.sort(key=lambda d: d["noise_samples"])
-# xs = [d["noise_samples"] for d in results]
-# ys = [d["Execution_time_sec"] for d in results]
-# plt.figure()
-# plt.plot(xs, ys, marker="o")
-# plt.xlabel("Noise Samples")
-# plt.ylabel("Quantitative Büchi (robust) value")
-# plt.title("IMDP results for timebound = 64, varying noise samples")
-# plt.grid(True)
-# plt.show()
-# plt.savefig("plot.png")
-
-# L, U = res["L"], res["U"]
-# proj_L = defaultdict(float); proj_U = defaultdict(float)
-# for (s, q), v in L.items(): proj_L[s] = max(proj_L[s], v)
-# for (s, q), v in U.items(): proj_U[s] = max(proj_U[s], v)
-# ("L (min probs) by base state:", dict(proj_L))
-# ("U (max probs) by base state:", dict(proj_U))
