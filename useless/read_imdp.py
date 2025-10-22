@@ -149,7 +149,3 @@ M = build_imdp(
     "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/Abstraction_interval.lab",
     "MDPs/Ab_UAV_10-10-2025_15-15-51/Ab_UAV_10-10-2025_15-15-51/N=20000_0/Abstraction_interval.tra"
 )
-
-
-a = 3 
-print(2)
