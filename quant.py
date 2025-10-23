@@ -349,7 +349,7 @@ def calc_init_mean(P, L, U):
 
 
 
-def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
+def interval_iteration(P, T: Set[ProdState], eps = 1e-1, max_iter = 51):
     L: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
     # U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
     U: Dict[ProdState, float] = {x: 1.0 for x in P.states}
@@ -357,9 +357,11 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-3, max_iter = 501):
 
     for iterator in range(max_iter):
 
-        if iterator % 5 == 0 and iterator > 0:
-            if iterator == 100:
-                print("Iteration:", iterator)
+        if iterator % 10 == 0 and iterator > 0:
+            print("Iteration:", iterator)
+            
+            # if iterator == 100:
+            #     print("Iteration:", iterator)
             mean_L, mean_U = calc_init_mean(P, L, U)
             mean_L_list.append(mean_L)
             mean_U_list.append(mean_U)
@@ -472,7 +474,7 @@ def update_csv_reslt(csv_path, address, res):
         if row["address"].strip() == address:
             row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
             row["Convergence_iteration"] = str(res["Convergence_iteration"])
-            row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
+            # row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
             row_found = True
             break
 
@@ -481,7 +483,7 @@ def update_csv_reslt(csv_path, address, res):
         row["address"] = address
         row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
         row["Convergence_iteration"] = str(res["Convergence_iteration"])
-        row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
+        # row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
         row["Noise Samples"] = str(20000)
         rows.append(row)
 
@@ -551,22 +553,22 @@ adds = [
 ]
 
 
-# for add in adds:
-#     res = run_imdp(address=add, noise_samples=20000)
-#     mean_L_list = res["mean_L_list"]
-#     mean_U_list = res["mean_U_list"]
+for add in adds:
+    res = run_imdp(address=add, noise_samples=20000)
+    mean_L_list = res["mean_L_list"]
+    mean_U_list = res["mean_U_list"]
 
-# x_values = list(range(0, len(mean_L_list) * 5, 5))
+x_values = list(range(0, len(mean_L_list) * 5, 5))
 
-# plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
-# plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
+plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
+plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
 
-# plt.xlabel('Iterations')
-# plt.ylabel('Probability')
-# plt.grid(True, linestyle='--', alpha=0.6)
-# plt.legend()
-# plt.tight_layout()
-# plt.savefig(f"Evolution_MeanL_MeanU_InitSt_VI_{add}.png")
+plt.xlabel('Iterations')
+plt.ylabel('Probability')
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
+plt.tight_layout()
+plt.savefig(f"Evolution_MeanL_MeanU_InitSt_VI_{add}.png")
 
 
 
