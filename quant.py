@@ -558,17 +558,17 @@ for add in adds:
     mean_L_list = res["mean_L_list"]
     mean_U_list = res["mean_U_list"]
 
-x_values = list(range(0, len(mean_L_list) * 5, 5))
+    x_values = list(range(0, len(mean_L_list) * 5, 5))
 
-plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
-plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
+    plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
+    plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
 
-plt.xlabel('Iterations')
-plt.ylabel('Probability')
-plt.grid(True, linestyle='--', alpha=0.6)
-plt.legend()
-plt.tight_layout()
-plt.savefig(f"Evolution_MeanL_MeanU_InitSt_VI_{add}.png")
+    plt.xlabel('Iterations')
+    plt.ylabel('Probability')
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f"Evolution_MeanL_MeanU_InitSt_VI_{add}.png")
 
 
 

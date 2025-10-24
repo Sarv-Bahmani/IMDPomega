@@ -1,2 +1,2 @@
 address,Model File,Model Name,timebound,Monte Carlo Iter,x_init,Noise Samples,Confidence,Sample Clustering,drone_mc_step,drone_mc_iter,bld_partition,bld_target_size,drug_partition,UAV_dim,Regions (base),Exported States (PRISM),Choices,Transitions,Partition,Enabled (total),Enabled (init),Deadlocks,PRISM Ver,Property,PRISM Iter,Range (init states),Final Result,DefAct (s),ProbCalc (s),Export (s),Build (s),Check (s),Total (s),MC Init,MC Summary,Python Ver,OS,Conda Env,Execution_time_sec,Convergence_iteration
-Ab_UAV_10-16-2025_20-48-14,,,,,,20000,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,27.214954,20
+Ab_UAV_10-16-2025_20-48-14,,,,,,20000,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,69.493332,50
