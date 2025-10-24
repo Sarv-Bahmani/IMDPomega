@@ -1,3 +1,4 @@
+import collections
 import matplotlib.pyplot as plt
 from collections import defaultdict
 import time
@@ -166,6 +167,9 @@ class Product:
         self.aecs = self.aecs_from_mecs(self.mecs)
         self.target = set().union(*self.aecs) if self.aecs else set()
         self.win_region = self.almost_sure_winning(self.target)
+
+        self.losing_sink = self.surely_losing()
+
         execution_time = time.perf_counter() - start_time
         self.qualitative_time_sec = execution_time
 
@@ -184,9 +188,7 @@ class Product:
 
         for (s, q) in set(self.states):
             self.trans_update(s, q)
-
       
-
     def trans_update(self, s, q):
         for a in self.imdp.actions.get(s, ()):
             outs = self.imdp.intervals.get((s, a), {})
@@ -207,14 +209,11 @@ class Product:
                         self.acc_states.add(ps)
             self.trans_prod[((s, q), a)] = prod_outs
 
-
-
     def prod_graph(self):
         for (ps, a), outs in self.trans_prod.items():
             for t, (l, u) in outs.items():
                 if u > 0:
                     self.graph[ps].add(t)
-
 
     def sccs(self):
         nodes = self.states
@@ -306,10 +305,39 @@ class Product:
         return Region
 
 
-    def losing_sink(self, SCC: Set[ProdState]) -> bool:
-        for s in SCC:
-            for a in self.actions.get(s, ()):
-                pass
+    def _backward_reachable(self, seeds: Set[ProdState]) -> Set[ProdState]:
+        """All states that can reach any seed along edges with u>0 (ignoring actions)."""
+        if not seeds:
+            return set()
+        # Build reverse adjacency on the fly
+        rev = defaultdict(set)
+        for u, nbrs in self.graph.items():
+            for v in nbrs:
+                rev[v].add(u)
+
+        seen = set(seeds)
+        dq = collections.deque(seeds)
+        while dq:
+            v = dq.popleft()
+            for u in rev.get(v, ()):
+                if u not in seen:
+                    seen.add(u)
+                    dq.append(u)
+        return seen
+
+    def surely_losing(self) -> Set[ProdState]:
+        """
+        States from which NO path can reach any AEC (target) state.
+        This is the complement of the backward-reachable set of the AECs.
+        """
+        # If there are no AECs at all, everything is surely losing.
+        if not self.target:
+            return set(self.states)
+        can_reach_target = self._backward_reachable(self.target)
+        return set(self.states) - can_reach_target
+
+
+
 
 
 
