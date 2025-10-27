@@ -129,6 +129,7 @@ class IMDP:
         self.intervals: Dict[Tuple[State, Action], Dict[State, Tuple[float, float]]] = {}
         self.label: Dict[State, Label] = {}
 
+
 class BuchiA:
     def __init__(self, ap: Set[str]):
         self.ap = set(ap)
@@ -163,6 +164,7 @@ class Product:
         self.prod_graph()
 
         start_time = time.perf_counter()
+
         self.mecs = self.mec_decomposition()
         self.aecs = self.aecs_from_mecs(self.mecs)
         self.target = set().union(*self.aecs) if self.aecs else set()
@@ -171,6 +173,7 @@ class Product:
         self.losing_sink = self.surely_losing()
 
         execution_time = time.perf_counter() - start_time
+        
         self.qualitative_time_sec = execution_time
 
 
@@ -341,6 +344,20 @@ class Product:
 
 
 
+def calc_init_mean(P, L, U):
+    mean_i_L = []
+    mean_i_U = []
+
+    for (s, q) in P.init_states:
+        mean_i_L.append(L[(s, q)])
+        mean_i_U.append(U[(s, q)])
+    mean_L = sum(mean_i_L) / len(mean_i_L) if mean_i_L else 0.0
+    mean_U = sum(mean_i_U) / len(mean_i_U) if mean_i_U else 0.0
+    return mean_L, mean_U
+
+
+
+
 
 def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
     base = 0.0
@@ -362,30 +379,19 @@ def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]],
 
 
 
-def calc_init_mean(P, L, U):
-    mean_i_L = []
-    mean_i_U = []
 
-    for (s, q) in P.init_states:
-        mean_i_L.append(L[(s, q)])
-        mean_i_U.append(U[(s, q)])
-    mean_L = sum(mean_i_L) / len(mean_i_L) if mean_i_L else 0.0
-    mean_U = sum(mean_i_U) / len(mean_i_U) if mean_i_U else 0.0
-    return mean_L, mean_U
-
-
-
-
-
-def interval_iteration(P, T: Set[ProdState], eps = 1e-1, max_iter = 51):
-    L: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
-    # U: Dict[ProdState, float] = {x: (1.0 if x in T else 0.0) for x in P.states}
+def interval_iteration(P, eps = 1e-1, max_iter = 51):
+    L: Dict[ProdState, float] = {x: 0.0 for x in P.states}
     U: Dict[ProdState, float] = {x: 1.0 for x in P.states}
-    mean_L_list, mean_U_list = [], [] 
+
+    L.update({x: 1.0 for x in P.target})
+    U.update({x: 0.0 for x in P.losing_sink})   
+
+    mean_L_list, mean_U_list = [], []
 
     for iterator in range(max_iter):
 
-        if iterator % 10 == 0 and iterator > 0:
+        if iterator % 5 == 0 and iterator > 0:
             print("Iteration:", iterator)
             
             # if iterator == 100:
@@ -399,7 +405,7 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-1, max_iter = 51):
         deltaU = 0.0
 
         for x in P.states:
-            if x in T:
+            if x in P.target:
                 continue
             acts = P.actions.get(x, ())
             if not acts:
@@ -433,7 +439,7 @@ def interval_iteration(P, T: Set[ProdState], eps = 1e-1, max_iter = 51):
 
 def quantitative_buchi_imdp(P, eps: float = 1e-3):
     start_time = time.perf_counter()
-    L, U, iterator, mean_L_list, mean_U_list  = interval_iteration(P, P.target, eps=eps)
+    L, U, iterator, mean_L_list, mean_U_list  = interval_iteration(P, eps=eps)
     execution_time = time.perf_counter() - start_time
     return {
         "mean_L_list": mean_L_list,
@@ -481,13 +487,13 @@ def buchi_reach(all_labsets):
 
 
 
-def row_already_calced(csv_path, address):
-    with csv_path.open(newline='', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            if row["address"].strip() == address and row["Execution_time_sec"] != "":
-                return True
-    return False
+# def row_already_calced(csv_path, address):
+#     with csv_path.open(newline='', encoding='utf-8') as f:
+#         reader = csv.DictReader(f)
+#         for row in reader:
+#             if row["address"].strip() == address and row["Execution_time_sec"] != "":
+#                 return True
+#     return False
 
 
 def update_csv_reslt(csv_path, address, res):
@@ -523,10 +529,10 @@ def update_csv_reslt(csv_path, address, res):
 
 
 def run_imdp(address, noise_samples):
-    is_row_already_calced = row_already_calced(csv_path, address)
-    if is_row_already_calced:
-        print(address)
-        print("^ already calced")
+    # is_row_already_calced = row_already_calced(csv_path, address)
+    # if is_row_already_calced:
+    #     print(address)
+    #     print("^ already calced")
         # return
     base = root_models / address / f"N={noise_samples}_0"
     sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
