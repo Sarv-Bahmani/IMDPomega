@@ -479,6 +479,30 @@ if __name__ == "__main__":
 
 
 
+    # B = BuchiA({tok for S in all_labsets for tok in S})
+    # B.add_state(0, initial=True) 
+    # B.add_state(1, accepting=True) 
+    # B.add_state(2) 
+    # for labset in all_labsets: 
+    #     B.add_edge(2, labset, 2) 
+    #     if "failed" in labset: 
+    #         B.add_edge(0, labset, 2) 
+    #         B.add_edge(1, labset, 2) 
+    #     elif "reached" in labset: # and not "deadlock" in labset and not "failed" in labset: 
+    #         B.add_edge(0, labset, 1) 
+    #         B.add_edge(1, labset, 1) 
+    #     else: 
+    #         B.add_edge(0, labset, 0) 
+    #         B.add_edge(1, labset, 1) 
+    # return B
+
+
+
+
+
+
+
+
     Prod = Product(MDP, Buchi)
     res = {
         "product_states": Prod.states,
