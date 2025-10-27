@@ -359,7 +359,7 @@ def calc_init_mean(P, L, U):
 
 
 
-def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float]) -> float:
+def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float], alpha=1) -> float:
     base = 0.0
     residual = 1.0
     items: List[Tuple[ProdState, float, float, float]] = []  # (y,l,u,V[y])
@@ -371,16 +371,18 @@ def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]],
     exp = base
     r = max(0.0, residual)
     for y, l, u, vy in items:
-        if r <= 0: break
+        if r <= 0: 
+            break
         add = min(u - l, r)
         exp += add * vy
         r -= add
+    exp = alpha * exp
     return exp
 
 
 
 
-def interval_iteration(P, eps = 1e-1, max_iter = 51):
+def interval_iteration(P, eps, max_iter = 51):
     L: Dict[ProdState, float] = {x: 0.0 for x in P.states}
     U: Dict[ProdState, float] = {x: 1.0 for x in P.states}
 
@@ -391,7 +393,7 @@ def interval_iteration(P, eps = 1e-1, max_iter = 51):
 
     for iterator in range(max_iter):
 
-        if iterator % 5 == 0 and iterator > 0:
+        if iterator % 2 == 0 and iterator > 0:
             print("Iteration:", iterator)
             
             # if iterator == 100:
@@ -420,7 +422,7 @@ def interval_iteration(P, eps = 1e-1, max_iter = 51):
                         continue
                     iv_list = [(y, l, u) for y, (l, u) in iv.items()]
                     mexp = expectation_for_action(iv_list, L)
-                    Mexp = expectation_for_action(iv_list, U)
+                    Mexp = expectation_for_action(iv_list, U, alpha=0.999)
                     best_min = mexp if best_min is None else max(best_min, mexp)
                     best_max = Mexp if best_max is None else max(best_max, Mexp)
                 newL = best_min if best_min is not None else 0.0
@@ -430,14 +432,17 @@ def interval_iteration(P, eps = 1e-1, max_iter = 51):
             deltaU = max(deltaU, abs(newU - U[x]))
             L[x], U[x] = newL, newU
 
-        gap = max(U[x] - L[x] for x in P.states) if P.states else 0.0
-        if max(deltaL, deltaU) <= eps and gap <= eps:
+
+        # gap = max(U[x] - L[x] for x in P.states)
+        # if max(deltaL, deltaU) <= eps and gap <= eps:
+
+        if all(U[x] <= L[x] for x in P.states):
             print("breakkkkkk Converged at iteration", iterator)
             break
 
     return L, U, iterator, mean_L_list, mean_U_list
 
-def quantitative_buchi_imdp(P, eps: float = 1e-3):
+def quantitative_buchi_imdp(P, eps):
     start_time = time.perf_counter()
     L, U, iterator, mean_L_list, mean_U_list  = interval_iteration(P, eps=eps)
     execution_time = time.perf_counter() - start_time
@@ -466,8 +471,8 @@ def quantitative_buchi_imdp(P, eps: float = 1e-3):
 
 def buchi_reach(all_labsets): 
     B = BuchiA({tok for S in all_labsets for tok in S}) 
-    B.add_state(0, initial=True) 
-    B.add_state(1, accepting=True) 
+    B.add_state(0, initial=False) 
+    B.add_state(1, initial=True, accepting=True) 
     B.add_state(2) 
     for labset in all_labsets: 
         B.add_edge(2, labset, 2) 
@@ -487,13 +492,6 @@ def buchi_reach(all_labsets):
 
 
 
-# def row_already_calced(csv_path, address):
-#     with csv_path.open(newline='', encoding='utf-8') as f:
-#         reader = csv.DictReader(f)
-#         for row in reader:
-#             if row["address"].strip() == address and row["Execution_time_sec"] != "":
-#                 return True
-#     return False
 
 
 def update_csv_reslt(csv_path, address, res):
@@ -528,28 +526,6 @@ def update_csv_reslt(csv_path, address, res):
 
 
 
-def run_imdp(address, noise_samples):
-    # is_row_already_calced = row_already_calced(csv_path, address)
-    # if is_row_already_calced:
-    #     print(address)
-    #     print("^ already calced")
-        # return
-    base = root_models / address / f"N={noise_samples}_0"
-    sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
-    I = IMDP()
-    print('WILL read the data')
-    _, _ = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
-    print('data is read')
-    all_labsets = {I.label[s] for s in I.states}
-    B = buchi_reach(all_labsets)
-    print('will build product')
-    P = Product(I, B)
-    print('product is build')
-    res = quantitative_buchi_imdp(P, eps=1e-3)
-    res.update({"Qualitative_time_sec": P.qualitative_time_sec})
-    update_csv_reslt(csv_path, address, res)
-    return res
-
 
 
 
@@ -576,6 +552,49 @@ def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
     plt.savefig(f"{pic_name}.png")
 
 
+def row_already_calced(csv_path, address):
+    with csv_path.open(newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row["address"].strip() == address and row["Execution_time_sec"] != "":
+                return True
+    return False
+
+
+def run_imdp(address, noise_samples):
+    # is_row_already_calced = row_already_calced(csv_path, address)
+    # if is_row_already_calced:
+    #     print(address)
+    #     print("^ already calced")
+        # return
+    base = root_models / address / f"N={noise_samples}_0"
+    sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
+    I = IMDP()
+    print('WILL read the data')
+    _, _ = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
+    print('data is read')
+    all_labsets = {I.label[s] for s in I.states}
+    B = buchi_reach(all_labsets)
+    print('will build product')
+    P = Product(I, B)
+    print('product is build')
+
+    common_init_target = P.init_states & P.target
+    common_init_losing = P.init_states & P.losing_sink
+    common_target_losing = P.target & P.losing_sink
+
+    print("Init ∩ Target:", len(common_init_target))
+    print("Init ∩ Losing:", len(common_init_losing))
+    print("Target ∩ Losing:", len(common_target_losing))
+
+    only_init = P.init_states - (P.target | P.losing_sink)
+    print("only init:", len(only_init))
+
+    res = quantitative_buchi_imdp(P, eps=1e-9)
+    res.update({"Qualitative_time_sec": P.qualitative_time_sec})
+    update_csv_reslt(csv_path, address, res)
+    return res
+
 
 adds = [
 'Ab_UAV_10-16-2025_20-48-14',
@@ -585,25 +604,24 @@ adds = [
 # 'Ab_UAV_10-16-2025_15-25-59',
 # 'Ab_UAV_10-16-2025_15-29-37'
 ]
+# for add in adds:
 
+add = adds[0]
+res = run_imdp(address=add, noise_samples=20000)
 
-for add in adds:
-    res = run_imdp(address=add, noise_samples=20000)
-    mean_L_list = res["mean_L_list"]
-    mean_U_list = res["mean_U_list"]
+mean_L_list = res["mean_L_list"]
+mean_U_list = res["mean_U_list"]
 
-    x_values = list(range(0, len(mean_L_list) * 5, 5))
+x_values = list(range(0, len(mean_L_list) * 5, 5))
 
-    plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
-    plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
+plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
+plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
 
-    plt.xlabel('Iterations')
-    plt.ylabel('Probability')
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(f"Evolution_MeanL_MeanU_InitSt_VI_{add}.png")
-
-
+plt.xlabel('Iterations')
+plt.ylabel('Probability')
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
+plt.tight_layout()
+plt.savefig(f"Evolution_MeanL_MeanU_InitSt_VI_{add}.png")
 
 
