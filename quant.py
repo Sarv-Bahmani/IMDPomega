@@ -150,6 +150,29 @@ class BuchiA:
         return self.trans_automa.get((q, lab), set())
 
 
+
+
+def buchi_reach(all_labsets): 
+    B = BuchiA({tok for S in all_labsets for tok in S}) 
+    B.add_state(0, initial=False) 
+    B.add_state(1, initial=True, accepting=True) 
+    B.add_state(2) 
+    for labset in all_labsets: 
+        B.add_edge(2, labset, 2) 
+        if "failed" in labset: 
+            B.add_edge(0, labset, 2) 
+            B.add_edge(1, labset, 2) 
+        elif "reached" in labset: # and not "deadlock" in labset and not "failed" in labset: 
+            B.add_edge(0, labset, 1) 
+            B.add_edge(1, labset, 1) 
+        else: 
+            B.add_edge(0, labset, 0) 
+            B.add_edge(1, labset, 1) 
+    return B
+
+
+
+
 class Product:
     def __init__(self, imdp, buchi):
         self.imdp = imdp
@@ -341,24 +364,6 @@ class Product:
 
 
 
-
-
-
-def calc_init_mean(P, L, U):
-    mean_i_L = []
-    mean_i_U = []
-
-    for (s, q) in P.init_states:
-        mean_i_L.append(L[(s, q)])
-        mean_i_U.append(U[(s, q)])
-    mean_L = sum(mean_i_L) / len(mean_i_L) if mean_i_L else 0.0
-    mean_U = sum(mean_i_U) / len(mean_i_U) if mean_i_U else 0.0
-    return mean_L, mean_U
-
-
-
-
-
 def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float], alpha=1) -> float:
     base = 0.0
     residual = 1.0
@@ -380,6 +385,15 @@ def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]],
     return exp
 
 
+def calc_init_mean(P, L, U):
+    mean_i_L = []
+    mean_i_U = []
+    for (s, q) in P.init_states:
+        mean_i_L.append(L[(s, q)])
+        mean_i_U.append(U[(s, q)])
+    mean_L = sum(mean_i_L) / len(mean_i_L) if mean_i_L else 0.0
+    mean_U = sum(mean_i_U) / len(mean_i_U) if mean_i_U else 0.0
+    return mean_L, mean_U
 
 
 def interval_iteration(P, eps, max_iter = 51):
@@ -393,21 +407,20 @@ def interval_iteration(P, eps, max_iter = 51):
 
     for iterator in range(max_iter):
 
-        if iterator % 2 == 0 and iterator > 0:
-            print("Iteration:", iterator)
-            
-            # if iterator == 100:
-            #     print("Iteration:", iterator)
+        if iterator % 2 == 0 and iterator > 0:            
+            if iterator == 10:
+                print("Iteration:", iterator)
             mean_L, mean_U = calc_init_mean(P, L, U)
             mean_L_list.append(mean_L)
             mean_U_list.append(mean_U)
-
 
         deltaL = 0.0
         deltaU = 0.0
 
         for x in P.states:
             if x in P.target:
+                continue
+            if x in P.losing_sink:
                 continue
             acts = P.actions.get(x, ())
             if not acts:
@@ -432,7 +445,6 @@ def interval_iteration(P, eps, max_iter = 51):
             deltaU = max(deltaU, abs(newU - U[x]))
             L[x], U[x] = newL, newU
 
-
         # gap = max(U[x] - L[x] for x in P.states)
         # if max(deltaL, deltaU) <= eps and gap <= eps:
 
@@ -455,42 +467,32 @@ def quantitative_buchi_imdp(P, eps):
         "Execution_time_sec": execution_time
     }
 
-# def buchi_reach(all_labsets):
-#     B = BuchiA({tok for S in all_labsets for tok in S})
-#     B.add_state(0, initial=True)
-#     B.add_state(1, accepting=True)
-#     for labset in all_labsets:
-#         if "reached" in labset:
-#             B.add_edge(0, labset, 1)
-#             B.add_edge(1, labset, 1)
-#         else:
-#             B.add_edge(0, labset, 0)
-#             B.add_edge(1, labset, 1)
-#     return B
-
-
-def buchi_reach(all_labsets): 
-    B = BuchiA({tok for S in all_labsets for tok in S}) 
-    B.add_state(0, initial=False) 
-    B.add_state(1, initial=True, accepting=True) 
-    B.add_state(2) 
-    for labset in all_labsets: 
-        B.add_edge(2, labset, 2) 
-        if "failed" in labset: 
-            B.add_edge(0, labset, 2) 
-            B.add_edge(1, labset, 2) 
-        elif "reached" in labset: # and not "deadlock" in labset and not "failed" in labset: 
-            B.add_edge(0, labset, 1) 
-            B.add_edge(1, labset, 1) 
-        else: 
-            B.add_edge(0, labset, 0) 
-            B.add_edge(1, labset, 1) 
-    return B
 
 
 
 
 
+def constants_vs_var(adds, variable):
+    results = []
+    for add in adds:
+        with csv_path.open(newline='', encoding="utf-8") as f:
+            rows = csv.DictReader(f)
+            for row in rows:
+                if row["address"].strip() == add:
+                    variable_val = float(row[variable])
+                    results.append({variable: variable_val, "Execution_time_sec": float(row["Execution_time_sec"])})
+
+
+
+def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
+    results.sort(key=lambda d: d[x_var])
+    xs = [d[x_var]/unit for d in results]
+    ys = [d[y_var] for d in results]
+    plt.figure()
+    plt.plot(xs, ys, marker="o")
+    plt.xlabel(x_lab)
+    plt.grid(True)
+    plt.savefig(f"{pic_name}.png")
 
 
 
@@ -525,31 +527,6 @@ def update_csv_reslt(csv_path, address, res):
         writer.writerows(rows)
 
 
-
-
-
-
-def constants_vs_var(adds, variable):
-    results = []
-    for add in adds:
-        with csv_path.open(newline='', encoding="utf-8") as f:
-            rows = csv.DictReader(f)
-            for row in rows:
-                if row["address"].strip() == add:
-                    variable_val = float(row[variable])
-                    results.append({variable: variable_val, "Execution_time_sec": float(row["Execution_time_sec"])})
-
-
-
-def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
-    results.sort(key=lambda d: d[x_var])
-    xs = [d[x_var]/unit for d in results]
-    ys = [d[y_var] for d in results]
-    plt.figure()
-    plt.plot(xs, ys, marker="o")
-    plt.xlabel(x_lab)
-    plt.grid(True)
-    plt.savefig(f"{pic_name}.png")
 
 
 def row_already_calced(csv_path, address):
