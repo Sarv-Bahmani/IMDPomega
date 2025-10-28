@@ -363,7 +363,6 @@ class Product:
         return set(self.states) - can_reach_target
 
 
-
 def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float], alpha=1) -> float:
     base = 0.0
     residual = 1.0
@@ -384,7 +383,6 @@ def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]],
     exp = alpha * exp
     return exp
 
-
 def calc_init_mean(P, L, U):
     mean_i_L = []
     mean_i_U = []
@@ -394,7 +392,6 @@ def calc_init_mean(P, L, U):
     mean_L = sum(mean_i_L) / len(mean_i_L) if mean_i_L else 0.0
     mean_U = sum(mean_i_U) / len(mean_i_U) if mean_i_U else 0.0
     return mean_L, mean_U
-
 
 def interval_iteration(P, eps, max_iter = 51):
     L: Dict[ProdState, float] = {x: 0.0 for x in P.states}
@@ -482,8 +479,6 @@ def constants_vs_var(adds, variable):
                     variable_val = float(row[variable])
                     results.append({variable: variable_val, "Execution_time_sec": float(row["Execution_time_sec"])})
 
-
-
 def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
     results.sort(key=lambda d: d[x_var])
     xs = [d[x_var]/unit for d in results]
@@ -493,8 +488,6 @@ def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
     plt.xlabel(x_lab)
     plt.grid(True)
     plt.savefig(f"{pic_name}.png")
-
-
 
 def update_csv_reslt(csv_path, address, res):
     rows = []
@@ -526,9 +519,6 @@ def update_csv_reslt(csv_path, address, res):
         writer.writeheader()
         writer.writerows(rows)
 
-
-
-
 def row_already_calced(csv_path, address):
     with csv_path.open(newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -536,6 +526,8 @@ def row_already_calced(csv_path, address):
             if row["address"].strip() == address and row["Execution_time_sec"] != "":
                 return True
     return False
+
+
 
 
 def run_imdp(address, noise_samples):
