@@ -31,103 +31,11 @@ actions_str = "actions"
 trans_MDP_str = "trans_MDP"
 underline = "_"
 
+iter_period = 2
 
-def load_sta_align(path_sta: str):
-    ids: List[int] = []
-    with open(path_sta) as f:
-        _ = f.readline()                    # header like: (x_pos,x_vel,...)
-        for line in f:
-            m = re.match(r'(\d+):', line)
-            if m: ids.append(int(m.group(1)))
-    remap = {sid:i for i,sid in enumerate(sorted(ids))}
-    return remap, len(remap)
 
-def load_lab_align(path_lab: str, remap: Dict[int,int]):
-    # first line: 0="init" 1="deadlock" 2="reached" 3="failed"
-    with open(path_lab) as f:
-        first = f.readline().strip()
-        labmap: Dict[int,str] = {}
-        for tok in first.split():
-            m = re.match(r'(\d+)="([^"]+)"', tok)
-            if m: labmap[int(m.group(1))] = m.group(2).lower()
+from imdp import IMDP
 
-        names_per_state: Dict[int, Set[str]] = defaultdict(set)
-        for line in f:
-            m = re.match(r'(\d+):\s*(.*)$', line.strip())
-            if not m: continue
-            s_orig = int(m.group(1))
-            s = remap[s_orig]
-            rest = m.group(2).strip()
-            if not rest: continue
-            for tok in rest.split():
-                lid = int(tok)
-                names_per_state[s].add(labmap.get(lid, ""))
-
-    # Build FrozenSet labels for your IMDP
-    label: Dict[int, FrozenSet[str]] = {}
-    goal: Set[int] = set()
-    avoid: Set[int] = set()
-    init: Set[int]  = set()
-    AtomicP: Set[int] = set()
-    for s, ns in names_per_state.items():
-        L = set(ns)
-        label[s] = frozenset(L if L else {})
-        AtomicP.update(lab for lab in L)
-        if "reached" in L or "goal" in L or "target" in L:
-            goal.add(s)
-        if "failed" in L or "deadlock" in L or "unsafe" in L or "bad" in L:
-            avoid.add(s)
-        if "init" in L:
-            init.add(s)
-    return label, goal, avoid, init, AtomicP
-
-def load_tra_align(path_tra: str, remap: Dict[int,int]):
-    # header: "N  |SA|  |E|" (three integers) – we’ll just read and ignore
-    with open(path_tra) as f:
-        _ = f.readline()
-        pat = re.compile(r'(\d+)\s+(\d+)\s+(\d+)\s*\[\s*([0-9.eE+\-]+)\s*,\s*([0-9.eE+\-]+)\s*\]')
-        trans = defaultdict(dict)     # (s,a) -> {s':(l,u)}
-        actions = defaultdict(set)    # s -> {a}
-        for raw in f:
-            line = raw.strip()
-            if not line: continue
-            m = pat.match(line)
-            if not m:
-                raise ValueError(f"Bad .tra line: {line[:120]}")
-            s0, a, s1 = int(m.group(1)), str(int(m.group(2))), int(m.group(3))
-            l, u = float(m.group(4)), float(m.group(5))
-            s  = remap[s0]
-            sp = remap[s1]
-            actions[s].add(a)
-            trans[(s, a)][sp] = (l, u)
-    return actions, trans
-
-def check_intervals(intervals: Dict[Tuple[State, Action], Dict[State, Tuple[float, float]]]):
-    for (s, a), outs in intervals.items():
-        for l, u in outs.values():
-            if u > 0 and l == 0:
-                return False
-    return True
-
-def imdp_from_files_quant(sta_path: str, lab_path: str, tra_path: str, I) -> Dict[str, Set[int]]:
-    # I is an instance of your IMDP() class from quant (1).py
-    remap, n_states = load_sta_align(sta_path)
-    # I.states = set(range(n_states))
-    I.states.update([i for i in range(n_states)])
-    I.label, goal, avoid, init, AtomicP = load_lab_align(lab_path, remap)
-    I.actions, I.intervals = load_tra_align(tra_path, remap)
-    is_SMDP = check_intervals(I.intervals)
-    if not is_SMDP:
-        raise ValueError("Some transition has upper > 0 but lower = 0")
-
-    return {"reached": goal, "avoid": avoid, "init": init}, AtomicP
-
-class IMDP:
-    def __init__(self):
-        self.states: Set[State] = set()
-        self.actions: Dict[State, Set[Action]] = defaultdict(set)
-        self.intervals: Dict[Tuple[State, Action], Dict[State, Tuple[float, float]]] = {}
-        self.label: Dict[State, Label] = {}
 
 
 class BuchiA:
@@ -363,6 +271,8 @@ class Product:
         return set(self.states) - can_reach_target
 
 
+
+
 def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float], alpha=1) -> float:
     base = 0.0
     residual = 1.0
@@ -404,7 +314,7 @@ def interval_iteration(P, eps, max_iter = 51):
 
     for iterator in range(max_iter):
 
-        if iterator % 2 == 0 and iterator > 0:            
+        if iterator % iter_period == 0 and iterator > 0:            
             if iterator == 10:
                 print("Iteration:", iterator)
             mean_L, mean_U = calc_init_mean(P, L, U)
@@ -530,18 +440,15 @@ def row_already_calced(csv_path, address):
 
 
 
-def run_imdp(address, noise_samples):
+def run_imdp(address, noise_samples, eps=1e-9):
     # is_row_already_calced = row_already_calced(csv_path, address)
     # if is_row_already_calced:
     #     print(address)
     #     print("^ already calced")
         # return
-    base = root_models / address / f"N={noise_samples}_0"
-    sta_p = base / sta; lab_p = base / lab; tra_p = base / tra
-    I = IMDP()
-    print('WILL read the data')
-    _, _ = imdp_from_files_quant(str(sta_p), str(lab_p), str(tra_p), I)
-    print('data is read')
+
+    I = IMDP(address=address, noise_samples=noise_samples)
+
     all_labsets = {I.label[s] for s in I.states}
     B = buchi_reach(all_labsets)
     print('will build product')
@@ -559,7 +466,10 @@ def run_imdp(address, noise_samples):
     only_init = P.init_states - (P.target | P.losing_sink)
     print("only init:", len(only_init))
 
-    res = quantitative_buchi_imdp(P, eps=1e-9)
+    all_inits = len(P.init_states)
+    print("all inits:", all_inits)
+
+    res = quantitative_buchi_imdp(P, eps)
     res.update({"Qualitative_time_sec": P.qualitative_time_sec})
     update_csv_reslt(csv_path, address, res)
     return res
@@ -576,12 +486,12 @@ adds = [
 # for add in adds:
 
 add = adds[0]
-res = run_imdp(address=add, noise_samples=20000)
+res = run_imdp(address=add, noise_samples=20000, eps=1e-9)
 
 mean_L_list = res["mean_L_list"]
 mean_U_list = res["mean_U_list"]
 
-x_values = list(range(0, len(mean_L_list) * 5, 5))
+x_values = list(range(0, len(mean_L_list) * iter_period, iter_period))
 
 plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
 plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
