@@ -69,26 +69,7 @@ class BuchiA:
 
 
 
-def buchi_reach(all_labsets): 
-    B = BuchiA({tok for S in all_labsets for tok in S}) 
-    B.add_state(0, accepting=True) 
-    B.add_state(1, initial=True) 
-    B.add_state(2) 
-    for labset in all_labsets: 
-        B.add_edge(2, labset, 2) 
-        if "failed" in labset or "deadlock" in labset: 
-            B.add_edge(0, labset, 2) 
-            B.add_edge(1, labset, 2) 
-        elif "reached" in labset: # and not "deadlock" in labset and not "failed" in labset: 
-            B.add_edge(0, labset, 0) 
-            B.add_edge(1, labset, 0) 
-        elif "init" in labset: 
-            B.add_edge(0, labset, 0) 
-            B.add_edge(1, labset, 1)
-        else: 
-            B.add_edge(0, labset, 0) 
-            B.add_edge(1, labset, 1) 
-    return B
+
 
 
 
@@ -116,9 +97,7 @@ def parse_hoa_to_buchia(hoa_text: str) -> BuchiA:
             for j in range(2, 2 + num_ap):
                 ap_name = parts[j].strip('"')
                 ap_list.append(ap_name)
-        
         i += 1
-    
     B = BuchiA(set(ap_list))
     
     i += 1
@@ -148,26 +127,13 @@ def parse_hoa_to_buchia(hoa_text: str) -> BuchiA:
 
 
 def parse_guard_to_labels(guard: str, ap_list: List[str]) -> Set[FrozenSet[str]]:
-    """
-    Guard uses AP indices: 0 = "failed", 1 = "reached"
-    
-    Examples:
-    - "[!0&1]" means not failed AND reached
-    - "[0]" means failed
-    - "[t]" means true (any label)
-    """
     if guard == 't':
         all_labels = set()
         for i in range(2 ** len(ap_list)):
             label = frozenset(ap_list[j] for j in range(len(ap_list)) if (i >> j) & 1)
             all_labels.add(label)
         return all_labels
-    
-    # Parse boolean expression
-    # Replace AP indices with actual names for evaluation
     result_labels = set()
-    
-    # Generate all possible labelsets and test against guard
     for i in range(2 ** len(ap_list)):
         label = frozenset(ap_list[j] for j in range(len(ap_list)) if (i >> j) & 1)
         
@@ -178,17 +144,9 @@ def parse_guard_to_labels(guard: str, ap_list: List[str]) -> Set[FrozenSet[str]]
 
 
 def evaluate_guard(guard: str, ap_list: List[str], label: FrozenSet[str]) -> bool:
-    """
-    Evaluate if a guard expression matches a given label.
-    Guard format: uses indices (0, 1, ...) with !, &, | operators
-    """
-    # Create a mapping: "0" -> whether ap_list[0] is in label
     expr = guard
-    
-    # Replace AP indices with True/False based on label
     for idx, ap_name in enumerate(ap_list):
         is_present = ap_name in label
-        # Replace index with boolean (be careful with order - replace higher indices first)
         expr = expr.replace(f'{idx}', str(is_present))
     
     expr = expr.replace('!', ' not ')
@@ -199,6 +157,8 @@ def evaluate_guard(guard: str, ap_list: List[str], label: FrozenSet[str]) -> boo
         return eval(expr)
     except:
         return False
+
+
 
 
 # # Usage:
@@ -228,36 +188,53 @@ def evaluate_guard(guard: str, ap_list: List[str], label: FrozenSet[str]) -> boo
 
 
 hoa_text = """HOA: v1
-name: "Freached & G(!deadlock & !failed)"
+name: "G!(deadlock | failed) & (init U reached)"
 States: 3
 Start: 1
-AP: 3 "reached" "deadlock" "failed"
+AP: 4 "deadlock" "failed" "init" "reached"
 acc-name: Buchi
 Acceptance: 1 Inf(0)
 properties: trans-labels explicit-labels state-acc complete
 properties: deterministic stutter-invariant very-weak
 --BODY--
 State: 0 {0}
-[!1&!2] 0
-[1 | 2] 2
+[!0&!1] 0
+[0 | 1] 2
 State: 1
-[0&!1&!2] 0
-[!0&!1&!2] 1
-[1 | 2] 2
+[!0&!1&3] 0
+[!0&!1&2&!3] 1
+[0 | 1 | !2&!3] 2
 State: 2
 [t] 2
 --END--"""
 
 B = parse_hoa_to_buchia(hoa_text)
-print(f"States: {B.Q}")
-print(f"Initial: {B.q0}")
-print(f"Accepting: {B.acc}")
-print(f"APs: {B.ap}")
+# print(f"States: {B.Q}")
+# print(f"Initial: {B.q0}")
+# print(f"Accepting: {B.acc}")
+# print(f"APs: {B.ap}")
 
 
 
+# def buchi_reach(all_labsets): 
+#     B = BuchiA({tok for S in all_labsets for tok in S}) 
+#     B.add_state(0, accepting=True) 
+#     B.add_state(1, initial=True) 
+#     B.add_state(2) 
+#     for labset in all_labsets: 
+#         B.add_edge(2, labset, 2) 
+#         if "failed" in labset or "deadlock" in labset: 
+#             B.add_edge(0, labset, 2) 
+#             B.add_edge(1, labset, 2) 
+#         elif "reached" in labset: # and not "deadlock" in labset and not "failed" in labset: 
+#             B.add_edge(0, labset, 0) 
+#             B.add_edge(1, labset, 0) 
+#         elif "init" in labset: 
+#             B.add_edge(0, labset, 0) 
+#             B.add_edge(1, labset, 1)
+#         else: 
+#             B.add_edge(0, labset, 0) 
+#             B.add_edge(1, labset, 1) 
+#     return B
 
-
-B_PREVVV = buchi_reach(all_labsets_2_2)
-
-a = 5
+# B_PREVVV = buchi_reach(all_labsets_2_2)
