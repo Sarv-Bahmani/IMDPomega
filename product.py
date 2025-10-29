@@ -1,10 +1,7 @@
 import collections
-import matplotlib.pyplot as plt
 from collections import defaultdict
 import time
 from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
-import re
-import csv
 from pathlib import Path
 
 
@@ -69,7 +66,6 @@ class Product:
 
 
     def build_product(self):
-        # Seed product states: start in (s, q0) for all s
         for s in self.imdp.states:
             for q in self.buchi.Q:
                 ps = (s, q)

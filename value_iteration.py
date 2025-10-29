@@ -120,7 +120,6 @@ def interval_iteration(P, eps, max_iter = 51):
 
         # gap = max(U[x] - L[x] for x in P.states)
         # if max(deltaL, deltaU) <= eps and gap <= eps:
-
         if all(U[x] <= L[x] for x in P.states):
             print("breakkkkkk Converged at iteration", iterator)
             break
@@ -243,11 +242,11 @@ def run_imdp(address, noise_samples, eps=1e-9):
 
 adds = [
 'Ab_UAV_10-16-2025_20-48-14',
-# 'Ab_UAV_10-16-2025_13-57-21',
-# 'Ab_UAV_10-16-2025_15-11-36',
-# 'Ab_UAV_10-16-2025_15-16-07',
-# 'Ab_UAV_10-16-2025_15-25-59',
-# 'Ab_UAV_10-16-2025_15-29-37'
+'Ab_UAV_10-16-2025_13-57-21',
+'Ab_UAV_10-16-2025_15-11-36',
+'Ab_UAV_10-16-2025_15-16-07',
+'Ab_UAV_10-16-2025_15-25-59',
+'Ab_UAV_10-16-2025_15-29-37'
 ]
 # for add in adds:
 
