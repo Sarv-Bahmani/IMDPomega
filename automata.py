@@ -28,13 +28,6 @@ actions_str = "actions"
 trans_MDP_str = "trans_MDP"
 underline = "_"
 
-# from imdp import IMDP
-
-# address='Ab_UAV_10-16-2025_20-48-14'
-# noise_samples=20000
-# I = IMDP(address=address, noise_samples=noise_samples)
-# all_labsets_2_2 = {I.label[s] for s in I.states}
-
 
 hoa_path = Path("hoa_files")
 
@@ -175,5 +168,4 @@ class Automata:
             else: 
                 self.add_edge(0, labset, 0) 
                 self.add_edge(1, labset, 1) 
-        # return B
 
