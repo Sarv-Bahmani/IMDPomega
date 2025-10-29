@@ -35,7 +35,7 @@ iter_period = 2
 
 
 from imdp import IMDP
-
+from automata import Automata
 
 
 class BuchiA:
@@ -62,7 +62,7 @@ class BuchiA:
 
 def buchi_reach(all_labsets): 
     B = BuchiA({tok for S in all_labsets for tok in S}) 
-    B.add_state(0, initial=False) 
+    B.add_state(0) 
     B.add_state(1, initial=True, accepting=True) 
     B.add_state(2) 
     for labset in all_labsets: 
@@ -450,7 +450,9 @@ def run_imdp(address, noise_samples, eps=1e-9):
     I = IMDP(address=address, noise_samples=noise_samples)
 
     all_labsets = {I.label[s] for s in I.states}
-    B = buchi_reach(all_labsets)
+    # B = buchi_reach(all_labsets)
+    B = Automata(all_labsets, "my_automaton.hoa")
+    # B = Automata({tok for S in all_labsets for tok in S}, "my_automaton.hoa")
     print('will build product')
     P = Product(I, B)
     print('product is build')
