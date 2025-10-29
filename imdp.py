@@ -1,12 +1,7 @@
-import collections
-import matplotlib.pyplot as plt
 from collections import defaultdict
-import time
 from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
 import re
-import csv
 from pathlib import Path
-
 
 import sys
 sys.setrecursionlimit(200000)

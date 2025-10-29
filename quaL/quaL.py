@@ -368,7 +368,6 @@ class Product:
 
 
     def _backward_reachable(self, seeds: Set[ProdState]) -> Set[ProdState]:
-        """All states that can reach any seed along edges with u>0 (ignoring actions)."""
         if not seeds:
             return set()
         # Build reverse adjacency on the fly
@@ -388,11 +387,6 @@ class Product:
         return seen
 
     def surely_losing(self) -> Set[ProdState]:
-        """
-        States from which NO path can reach any AEC (target) state.
-        This is the complement of the backward-reachable set of the AECs.
-        """
-        # If there are no AECs at all, everything is surely losing.
         if not self.target:
             return set(self.states)
         can_reach_target = self._backward_reachable(self.target)
