@@ -11,8 +11,6 @@ ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
 
-
-
 def initialize_env_policy_random():
     env_policy: Dict[Tuple[ProdState, Action], Dict[ProdState, float]] = {}
     for (x, a), intervals in P.trans_prod.items():
@@ -40,8 +38,6 @@ def initialize_env_policy_random():
     return env_policy
 
 
-
-
 def initialize_player_policy():
     player_policy: Dict[ProdState, Action] = {}
     for x in P.states:
@@ -51,8 +47,6 @@ def initialize_player_policy():
             player_policy[x] = random.choice(list(actions))
 
     return player_policy
-
-
 
 def policy_evaluation(V, player_policy, env_policy, max_iter=10, eps=1e-1):
     for _ in range(max_iter):
@@ -65,60 +59,44 @@ def policy_evaluation(V, player_policy, env_policy, max_iter=10, eps=1e-1):
             new_v = sum(prob * V.get(y, 0.0) for y, prob in dist.items())
             
             delta = max(delta, abs(new_v - V[x]))
-            V[x] = new_v
-        
+            V[x] = new_v        
         if delta < eps:
             break
-    
     return V
-
 
 def player_policy_improvement(V, player_policy, env_policy):
     improved = False
-
     for x in P.states:
         if x in P.target or x in P.losing_sink:
             continue
-        
         best_action = None
         best_value = -float('inf')
-        
         for a in P.actions.get(x, []):
             dist = env_policy.get((x, a), {})
             exp_value = sum(prob * V.get(y, 0.0) for y, prob in dist.items())
-            
             if exp_value > best_value:
                 best_value = exp_value
                 best_action = a
-        
         if best_action and best_action != player_policy.get(x):
             player_policy[x] = best_action
             improved = True
-    
     return improved
-
 
 
 def env_policy_improvement(V, player_policy, env_policy):
     for (x, a), intervals in P.trans_prod.items():
         dist = {}
         residual = 1.0
-        
         for y, (l, u) in intervals.items():
             dist[y] = l
             residual -= l
-        
-        
         r = max(0.0, residual)
         while r > 0:
             worst, (l, u) = min(intervals.items(), key=lambda item: V.get(item[0], 0.0))
             add = min(u - dist[worst], r)
             dist[worst] += add
             r -= add
-
         env_policy[(x, a)] = dist
-
-
 
 
 def strategy_improvement(P, player_iters=5, max_outer_iters=100):
@@ -137,12 +115,7 @@ def strategy_improvement(P, player_iters=5, max_outer_iters=100):
         
         V = policy_evaluation(V, player_policy, env_policy)
         env_policy_improvement(V, player_policy, env_policy)
-        
-        
     return V, player_policy, env_policy
-
-
-
 
 
 address = 'Ab_UAV_10-16-2025_20-48-14'
