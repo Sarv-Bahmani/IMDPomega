@@ -55,20 +55,10 @@ def initialize_player_policy():
 
 
 def policy_evaluation(V, player_policy, env_policy, max_iter=10, eps=1e-1):
-    # V = {x: 0.0 for x in P.states}
-    # V.update({x: 1.0 for x in P.target})
-    # V.update({x: 0.0 for x in P.losing_sink})
-    
     for _ in range(max_iter):
         delta = 0.0
         for x in P.states:
             if x in P.target or x in P.losing_sink: continue
-            # if x in P.target:
-            #     V[x] = 1.0
-            #     continue
-            # if x in P.losing_sink:
-            #     V[x] = 0.0
-            #     continue
             
             a = player_policy.get(x)
             dist = env_policy.get((x, a), {})
@@ -118,9 +108,6 @@ def env_policy_improvement(V, player_policy, env_policy):
             dist[y] = l
             residual -= l
         
-        # if residual > 0 and intervals:
-        #     worst_successor = min(intervals.keys(), key=lambda y: V.get(y, 0.0))
-        #     dist[worst_successor] += residual
         
         r = max(0.0, residual)
         while r > 0:
