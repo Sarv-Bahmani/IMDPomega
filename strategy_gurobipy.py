@@ -1,0 +1,178 @@
+import gurobipy as gp
+from imdp import IMDP
+from automata import Automata
+from product import Product
+import random
+from typing import Dict, Set, Tuple, FrozenSet
+
+State = int
+QState = int
+Action = str
+ProdState = Tuple[State, QState]
+Label = FrozenSet[str]
+
+
+def initialize_env_policy_random(P):
+    env_policy: Dict[Tuple[ProdState, Action], Dict[ProdState, float]] = {}
+    for (x, a), intervals in P.trans_prod.items():
+        if x in P.losing_sink: 
+            continue
+        dist = {}
+        if x in P.target:
+            dist[x] = 1.0
+            env_policy[(x, a)] = dist
+            continue
+        residual = 1.0
+        for y, (l, u) in intervals.items():
+            dist[y] = l
+            residual -= l
+        
+        r = max(0.0, residual)
+        while r > 0:
+            chosen, (l, u) = random.choice(list(intervals.items()))
+            add = min(u - dist[chosen], r)
+            dist[chosen] += add
+            r -= add
+
+        env_policy[(x, a)] = dist
+
+    return env_policy
+
+
+
+
+
+
+
+def solve_player_LP(env_policy, P):
+    m = gp.Model("player_strategy")
+    
+    V = {}
+    for x in P.states:
+        if x in P.target:
+            V[x] = m.addVar(lb=1.0, ub=1.0, name=f"V_{x}")
+        elif x in P.losing_sink:
+            V[x] = m.addVar(lb=0.0, ub=0.0, name=f"V_{x}")
+        else:
+            V[x] = m.addVar(lb=0.0, ub=1.0, name=f"V_{x}")
+    
+    for x in P.states:
+        if x in P.target or x in P.losing_sink:
+            continue
+            
+        for action in P.actions.get(x, []):
+            expected_expr = gp.LinExpr()
+            for y, prob in env_policy.get((x, action), {}).items():
+                expected_expr += prob * V[y]
+            
+            m.addConstr(V[x] >= expected_expr, 
+                       name=f"constraint_{x}_{action}")
+    
+    m.setObjective(gp.quicksum(V[s] for s in P.states 
+                               if s not in P.target and s not in P.losing_sink), 
+                   gp.GRB.MINIMIZE)
+    
+    m.optimize()
+    
+    V_result = {s: v.X for s, v in V.items()}
+    player_strategy = extract_optimal_actions(V_result, env_policy, P)
+    
+    return V_result, player_strategy
+
+
+
+def extract_optimal_actions(V_result, env_policy, P):
+    player_strategy = {}
+    for state in P.states:
+        if state in P.target or state in P.losing_sink:
+            continue
+            
+        best_action = None
+        best_value = -float('inf')
+        
+        for action in P.actions.get(state, []):
+            expected = 0.0
+            for next_state, prob in env_policy.get((state, action), {}).items():
+                expected += prob * V_result[next_state]
+            
+            if expected > best_value:
+                best_value = expected
+                best_action = action
+        
+        player_strategy[state] = best_action
+    return player_strategy
+
+def update_environment_policy(V, player_strategy, P):
+    env_policy = {}
+    
+    for state in P.states:
+        if state in P.target or state in P.losing_sink:
+            continue
+            
+        action = player_strategy[state]
+        intervals = P.trans_prod.get((state, action), {})
+        
+        dist = {}
+        residual = 1.0
+        
+        for y, (l, u) in intervals.items():
+            dist[y] = l
+            residual -= l
+        
+        sorted_states = sorted(intervals.keys(), key=lambda s: V.get(s, 0))
+        
+        for y in sorted_states:
+            l, u = intervals[y]
+            add = min(u - dist[y], residual)
+            dist[y] += add
+            residual -= add
+            if residual <= 0:
+                break
+        
+        env_policy[(state, action)] = dist
+    
+    return env_policy
+
+
+
+
+def converged(V_old, V_new, tol):
+    for state in V_old.keys():
+        if abs(V_old[state] - V_new[state]) > tol:
+            return False
+    return True
+
+
+
+
+address = 'Ab_UAV_10-16-2025_20-48-14'
+noise_samples = 20000
+I = IMDP(address=address, noise_samples=noise_samples)
+
+
+all_labsets = {I.label[s] for s in I.states}
+B = Automata(all_labsets, "my_automaton.hoa")
+P = Product(I, B)
+
+env_policy = initialize_env_policy_random(P)
+
+V = {}
+for state in P.states:
+    if state in P.target:
+        V[state] = 1.0
+    elif state in P.losing_sink:
+        V[state] = 0.0
+    else:
+        V[state] = 0.5 #????????????????????????? 
+
+
+
+max_iterations = 20
+for iteration in range(max_iterations):
+    V_new, player_strategy = solve_player_LP(env_policy, P)
+    
+    env_policy = update_environment_policy(V_new, player_strategy, P)
+    
+    if converged(V, V_new, tol=1e-1):
+        break
+    V = V_new
