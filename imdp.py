@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
+from typing import Dict, Set, Tuple, FrozenSet, List
 import re
 from pathlib import Path
 
@@ -19,9 +19,6 @@ QState = int
 Action = str
 ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
-
-
-iter_period = 2
 
 
 class IMDP:

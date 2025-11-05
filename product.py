@@ -19,16 +19,6 @@ ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
 
-iter_period = 2
-
-
-from imdp import IMDP
-from automata import Automata
-
-
-
-
-
 class Product:
     def __init__(self, imdp, buchi):
         self.imdp = imdp
@@ -74,8 +64,7 @@ class Product:
     def trans_update(self, s, q):
         for a in self.imdp.actions.get(s, ()):
             outs = self.imdp.intervals.get((s, a), {})
-            if not outs: 
-                continue
+            if not outs:    continue
             self.actions[(s, q)].add(a)
             prod_outs = {}
             for s2, (l, u) in outs.items():
