@@ -70,6 +70,9 @@ class Product:
             for s2, (l, u) in outs.items():
                 labset = self.imdp.label.get(s, frozenset())
                 next_qs = self.buchi.step(q, labset)
+                # if labset == frozenset({"init"}):
+                #     next_qs = next_qs.union(self.buchi.Q)
+
                 if not next_qs:
                     continue
                 for q3 in next_qs:
