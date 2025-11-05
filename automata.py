@@ -40,8 +40,8 @@ class Automata:
         hoa_address = hoa_path / hoa_name
         with open(hoa_address) as f:
             hoa_text = f.read()
-        # self.parse_hoa_to_auto(hoa_text)
-        self.buchi_reach()
+        self.parse_hoa_to_auto(hoa_text)
+        # self.buchi_reach()
 
     def add_state(self, q, initial=False, accepting=False):
         self.Q.add(q)
