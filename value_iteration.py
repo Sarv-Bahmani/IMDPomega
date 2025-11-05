@@ -1,20 +1,13 @@
 import statistics
-import collections
 import matplotlib.pyplot as plt
-from collections import defaultdict
 import time
-from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
-import re
+from typing import Dict, Tuple, FrozenSet, List
 import csv
 from pathlib import Path
 
 import sys
 sys.setrecursionlimit(200000)
 
-
-sta = "Abstraction_interval.sta"
-lab = "Abstraction_interval.lab"
-tra = "Abstraction_interval.tra"
 
 csv_path = Path("gen_imdp_info/IMDPs_info.csv")
 root_models = Path("MDPs")
@@ -25,11 +18,6 @@ Action = str
 ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
-states_str = "states"
-init_state_str = "init_state"
-actions_str = "actions"
-trans_MDP_str = "trans_MDP"
-underline = "_"
 
 iter_period = 2
 
@@ -83,7 +71,7 @@ def interval_iteration(P, eps, max_iter = 151):
     for iterator in range(max_iter):
 
         if iterator % iter_period == 0:            
-            if iterator == 10:
+            if iterator % 10 == 0:
                 print("Iteration:", iterator)
             mean_L, mean_U = calc_init_mean(P, L, U)
             mean_L_list.append(mean_L)
@@ -102,19 +90,19 @@ def interval_iteration(P, eps, max_iter = 151):
                 newL = 0.0
                 newU = 0.0
             else:
-                best_min = None
-                best_max = None
+                best_min = 0
+                best_max = 0
                 for a in acts:
                     iv = P.trans_prod.get((x, a), {})
                     if not iv:
                         continue
                     iv_list = [(y, l, u) for y, (l, u) in iv.items()]
                     mexp = expectation_for_action(iv_list, L)
-                    Mexp = expectation_for_action(iv_list, U, alpha=0.999)
-                    best_min = mexp if best_min is None else max(best_min, mexp)
-                    best_max = Mexp if best_max is None else max(best_max, Mexp)
-                newL = best_min if best_min is not None else 0.0
-                newU = best_max if best_max is not None else 0.0
+                    Mexp = expectation_for_action(iv_list, U, alpha=0.99)
+                    best_min = max(best_min, mexp)
+                    best_max = max(best_max, Mexp)
+                newL = best_min
+                newU = best_max
 
             deltaL = max(deltaL, abs(newL - L[x]))
             deltaU = max(deltaU, abs(newU - U[x]))
@@ -217,7 +205,7 @@ def run_imdp(address, noise_samples, eps=1e-9):
     I = IMDP(address=address, noise_samples=noise_samples)
 
     all_labsets = {I.label[s] for s in I.states}
-    B = Automata(all_labsets, "my_automaton.hoa")
+    B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=True)
     print('will build product')
     P = Product(I, B)
     print('product is build')
