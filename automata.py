@@ -2,14 +2,6 @@ from collections import defaultdict
 from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
 from pathlib import Path
 
-import sys
-sys.setrecursionlimit(200000)
-
-
-sta = "Abstraction_interval.sta"
-lab = "Abstraction_interval.lab"
-tra = "Abstraction_interval.tra"
-
 
 State = int
 QState = int
@@ -17,19 +9,13 @@ Action = str
 ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
-states_str = "states"
-init_state_str = "init_state"
-actions_str = "actions"
-trans_MDP_str = "trans_MDP"
-underline = "_"
-
 
 hoa_path = Path("hoa_files")
 
 
 
 class Automata:
-    def __init__(self, ap: Set[str], hoa_name):
+    def __init__(self, ap: Set[str], hoa_name, read_from_hoa=True):
         self.ap = set(ap)
         # self.ap = {tok for S in ap for tok in S}
         self.Q: Set[QState] = set()
@@ -40,8 +26,10 @@ class Automata:
         hoa_address = hoa_path / hoa_name
         with open(hoa_address) as f:
             hoa_text = f.read()
-        self.parse_hoa_to_auto(hoa_text)
-        # self.buchi_reach()
+        if read_from_hoa:
+            self.parse_hoa_to_auto(hoa_text)
+        if not read_from_hoa:   
+            self.buchi_reach()
 
     def add_state(self, q, initial=False, accepting=False):
         self.Q.add(q)
