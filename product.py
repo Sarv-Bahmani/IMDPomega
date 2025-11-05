@@ -15,6 +15,7 @@ root_models = Path("MDPs")
 State = int
 QState = int
 Action = str
+ProdAction = Tuple[Action, QState]
 ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
@@ -25,8 +26,8 @@ class Product:
         self.buchi = buchi
         self.states: Set[ProdState] = set()
         self.init_states: Set[ProdState] = set()
-        self.actions: Dict[ProdState, Set[Action]] = defaultdict(set)
-        self.trans_prod: Dict[Tuple[ProdState, Action], Dict[ProdState, Tuple[float, float]]] = {}
+        self.actions: Dict[ProdState, Set[ProdAction]] = defaultdict(set)
+        self.trans_prod: Dict[Tuple[ProdState, ProdAction], Dict[ProdState, Tuple[float, float]]] = {}
         self.acc_states: Set[ProdState] = set()
         self.graph = defaultdict(set)
         self.build_product()
@@ -65,23 +66,20 @@ class Product:
         for a in self.imdp.actions.get(s, ()):
             outs = self.imdp.intervals.get((s, a), {})
             if not outs:    continue
-            self.actions[(s, q)].add(a)
-            prod_outs = {}
-            for s2, (l, u) in outs.items():
-                labset = self.imdp.label.get(s, frozenset())
-                next_qs = self.buchi.step(q, labset)
+            labset = self.imdp.label.get(s, frozenset())
+            next_qs = self.buchi.step(q, labset)
+            for q3 in next_qs:
+                prod_outs = {}
+                self.actions[(s, q)].add((a,q3))
+                for s2, (l, u) in outs.items():
                 # if labset == frozenset({"init"}):
                 #     next_qs = next_qs.union(self.buchi.Q)
-
-                if not next_qs:
-                    continue
-                for q3 in next_qs:
                     ps = (s2, q3)
                     old = prod_outs.get(ps, (0.0, 0.0))
                     prod_outs[ps] = (old[0] + l, old[1] + u)
                     if q3 in self.buchi.acc:
                         self.acc_states.add(ps)
-            self.trans_prod[((s, q), a)] = prod_outs
+                self.trans_prod[((s, q), (a,q3))] = prod_outs
 
     def prod_graph(self):
         for (ps, a), outs in self.trans_prod.items():
@@ -114,8 +112,8 @@ class Product:
                 dfs(v)
         return comps
 
-    def closed_actions(self, SCC: Set[ProdState]) -> Dict[ProdState, Set[Action]]:
-        keep: Dict[ProdState, Set[Action]] = {}
+    def closed_actions(self, SCC: Set[ProdState]) -> Dict[ProdState, Set[ProdAction]]:
+        keep: Dict[ProdState, Set[ProdAction]] = {}
         for s in SCC:
             kept = set()
             for a in self.actions.get(s, ()):
