@@ -19,11 +19,6 @@ Action = str
 ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
-states_str = "states"
-init_state_str = "init_state"
-actions_str = "actions"
-trans_MDP_str = "trans_MDP"
-underline = "_"
 
 
 class MDP:
