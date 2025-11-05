@@ -59,7 +59,7 @@ def calc_init_mean(P, L, U):
     mean_U = statistics.mean(mean_i_U) if mean_i_U else 0.0
     return mean_L, mean_U
 
-def interval_iteration(P, eps, max_iter = 151):
+def interval_iteration(P, eps, max_iter = 51):
     L: Dict[ProdState, float] = {x: 0.0 for x in P.states}
     U: Dict[ProdState, float] = {x: 1.0 for x in P.states}
 
@@ -163,17 +163,17 @@ def update_csv_reslt(csv_path, address, res):
         if row["address"].strip() == address:
             row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
             row["Convergence_iteration"] = str(res["Convergence_iteration"])
-            # row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
+            row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
             row_found = True
             break
 
     if not row_found:
         row = {fn: "" for fn in fieldnames}
         row["address"] = address
+        row["Noise Samples"] = str(20000)
         row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
         row["Convergence_iteration"] = str(res["Convergence_iteration"])
-        # row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
-        row["Noise Samples"] = str(20000)
+        row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
         rows.append(row)
 
     with csv_path.open("w", newline='', encoding='utf-8') as f:
@@ -183,31 +183,38 @@ def update_csv_reslt(csv_path, address, res):
 
 
 def run_imdp(address, noise_samples, eps=1e-9):
-
     I = IMDP(address=address, noise_samples=noise_samples)
-
     all_labsets = {I.label[s] for s in I.states}
-    B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=False)
+    B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=True)
     P = Product(I, B)
     
 
 
     # print('product is build')
-
     print("Number of product states:", len(P.states))
     common_init_target = P.init_states & P.target
     common_init_losing = P.init_states & P.losing_sink
+    common_init_losing_or_ddlck = len({
+    x for x in P.init_states 
+    if P.imdp.label.get(x[0], frozenset()) & frozenset({"failed", "deadlock"})})
     # common_target_losing = P.target & P.losing_sink
 
     print("Init ∩ Target:", len(common_init_target))
     print("Init ∩ Losing:", len(common_init_losing))
+    print("Init ∩ (Losing ∪ Deadlock):", common_init_losing_or_ddlck)
     # print("Target ∩ Losing:", len(common_target_losing))
+    print("target states:", len(P.target))
+    print("losing states:", len(P.losing_sink))
 
     only_init = P.init_states - (P.target | P.losing_sink)
     print("only init:", len(only_init))
 
     all_inits = len(P.init_states)
     print("all inits:", all_inits)
+
+
+
+
 
     res = value_iteration_scope(P, eps)
     res.update({"Qualitative_time_sec": P.qualitative_time_sec})
