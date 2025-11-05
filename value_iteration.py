@@ -181,40 +181,27 @@ def update_csv_reslt(csv_path, address, res):
         writer.writeheader()
         writer.writerows(rows)
 
-def row_already_calced(csv_path, address):
-    with csv_path.open(newline='', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            if row["address"].strip() == address and row["Execution_time_sec"] != "":
-                return True
-    return False
-
-
-
 
 def run_imdp(address, noise_samples, eps=1e-9):
-    # is_row_already_calced = row_already_calced(csv_path, address)
-    # if is_row_already_calced:
-    #     print(address)
-    #     print("^ already calced")
-        # return
 
     I = IMDP(address=address, noise_samples=noise_samples)
 
     all_labsets = {I.label[s] for s in I.states}
     B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=False)
-    print('will build product')
     P = Product(I, B)
-    print('product is build')
+    
+
+
+    # print('product is build')
 
     print("Number of product states:", len(P.states))
     common_init_target = P.init_states & P.target
     common_init_losing = P.init_states & P.losing_sink
-    common_target_losing = P.target & P.losing_sink
+    # common_target_losing = P.target & P.losing_sink
 
     print("Init ∩ Target:", len(common_init_target))
     print("Init ∩ Losing:", len(common_init_losing))
-    print("Target ∩ Losing:", len(common_target_losing))
+    # print("Target ∩ Losing:", len(common_target_losing))
 
     only_init = P.init_states - (P.target | P.losing_sink)
     print("only init:", len(only_init))
