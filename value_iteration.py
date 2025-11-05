@@ -1,3 +1,4 @@
+import statistics
 import collections
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -6,7 +7,6 @@ from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
 import re
 import csv
 from pathlib import Path
-
 
 import sys
 sys.setrecursionlimit(200000)
@@ -65,11 +65,13 @@ def calc_init_mean(P, L, U):
     for (s, q) in P.init_states:
         mean_i_L.append(L[(s, q)])
         mean_i_U.append(U[(s, q)])
-    mean_L = sum(mean_i_L) / len(mean_i_L) if mean_i_L else 0.0
-    mean_U = sum(mean_i_U) / len(mean_i_U) if mean_i_U else 0.0
+    # mean_L = sum(mean_i_L) / len(mean_i_L) if mean_i_L else 0.0
+    # mean_U = sum(mean_i_U) / len(mean_i_U) if mean_i_U else 0.0
+    mean_L = statistics.mean(mean_i_L) if mean_i_L else 0.0
+    mean_U = statistics.mean(mean_i_U) if mean_i_U else 0.0
     return mean_L, mean_U
 
-def interval_iteration(P, eps, max_iter = 51):
+def interval_iteration(P, eps, max_iter = 151):
     L: Dict[ProdState, float] = {x: 0.0 for x in P.states}
     U: Dict[ProdState, float] = {x: 1.0 for x in P.states}
 
@@ -80,7 +82,7 @@ def interval_iteration(P, eps, max_iter = 51):
 
     for iterator in range(max_iter):
 
-        if iterator % iter_period == 0 and iterator > 0:            
+        if iterator % iter_period == 0:            
             if iterator == 10:
                 print("Iteration:", iterator)
             mean_L, mean_U = calc_init_mean(P, L, U)
@@ -220,6 +222,7 @@ def run_imdp(address, noise_samples, eps=1e-9):
     P = Product(I, B)
     print('product is build')
 
+    print("Number of product states:", len(P.states))
     common_init_target = P.init_states & P.target
     common_init_losing = P.init_states & P.losing_sink
     common_target_losing = P.target & P.losing_sink
