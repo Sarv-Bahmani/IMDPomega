@@ -20,16 +20,8 @@ Action = str
 ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
-states_str = "states"
-init_state_str = "init_state"
-actions_str = "actions"
-trans_MDP_str = "trans_MDP"
-underline = "_"
 
 iter_period = 2
-
-
-
 
 
 class IMDP:
