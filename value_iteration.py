@@ -70,7 +70,7 @@ def interval_iteration(P, eps, max_iter = 151):
 
     for iterator in range(max_iter):
 
-        if iterator % iter_period == 0:            
+        if iterator % iter_period == 0 and iterator > 0:            
             if iterator % 10 == 0:
                 print("Iteration:", iterator)
             mean_L, mean_U = calc_init_mean(P, L, U)
@@ -98,7 +98,7 @@ def interval_iteration(P, eps, max_iter = 151):
                         continue
                     iv_list = [(y, l, u) for y, (l, u) in iv.items()]
                     mexp = expectation_for_action(iv_list, L)
-                    Mexp = expectation_for_action(iv_list, U, alpha=0.99)
+                    Mexp = expectation_for_action(iv_list, U, alpha=0.999)
                     best_min = max(best_min, mexp)
                     best_max = max(best_max, Mexp)
                 newL = best_min
@@ -116,7 +116,7 @@ def interval_iteration(P, eps, max_iter = 151):
 
     return L, U, iterator, mean_L_list, mean_U_list
 
-def quantitative_buchi_imdp(P, eps):
+def value_iteration_scope(P, eps):
     start_time = time.perf_counter()
     L, U, iterator, mean_L_list, mean_U_list  = interval_iteration(P, eps=eps)
     execution_time = time.perf_counter() - start_time
@@ -128,9 +128,6 @@ def quantitative_buchi_imdp(P, eps):
         "Convergence_iteration": iterator,
         "Execution_time_sec": execution_time
     }
-
-
-
 
 
 
@@ -205,7 +202,7 @@ def run_imdp(address, noise_samples, eps=1e-9):
     I = IMDP(address=address, noise_samples=noise_samples)
 
     all_labsets = {I.label[s] for s in I.states}
-    B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=True)
+    B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=False)
     print('will build product')
     P = Product(I, B)
     print('product is build')
@@ -225,7 +222,7 @@ def run_imdp(address, noise_samples, eps=1e-9):
     all_inits = len(P.init_states)
     print("all inits:", all_inits)
 
-    res = quantitative_buchi_imdp(P, eps)
+    res = value_iteration_scope(P, eps)
     res.update({"Qualitative_time_sec": P.qualitative_time_sec})
     update_csv_reslt(csv_path, address, res)
     return res
@@ -244,10 +241,13 @@ adds = [
 add = adds[0]
 res = run_imdp(address=add, noise_samples=20000, eps=1e-9)
 
+
+
+
 mean_L_list = res["mean_L_list"]
 mean_U_list = res["mean_U_list"]
 
-x_values = list(range(0, len(mean_L_list) * iter_period, iter_period))
+x_values = list(range(iter_period, (len(mean_L_list)+1) * iter_period, iter_period))
 
 plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
 plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
