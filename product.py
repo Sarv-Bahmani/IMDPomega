@@ -9,10 +9,6 @@ import sys
 sys.setrecursionlimit(200000)
 
 
-sta = "Abstraction_interval.sta"
-lab = "Abstraction_interval.lab"
-tra = "Abstraction_interval.tra"
-
 csv_path = Path("gen_imdp_info/IMDPs_info.csv")
 root_models = Path("MDPs")
 
@@ -22,11 +18,6 @@ Action = str
 ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
-states_str = "states"
-init_state_str = "init_state"
-actions_str = "actions"
-trans_MDP_str = "trans_MDP"
-underline = "_"
 
 iter_period = 2
 
@@ -73,7 +64,8 @@ class Product:
                 if q in self.buchi.acc:
                     self.acc_states.add(ps)
                 if "init" in self.imdp.label[s]: # and not "failed" in self.imdp.label[s]:
-                    if q == self.buchi.q0:
+                    # if q == self.buchi.q0:
+                    if q in self.buchi.init:
                         self.init_states.add(ps)
 
         for (s, q) in set(self.states):
