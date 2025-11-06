@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
         update_csv_reslt(csv_path, add, results)
 
-    generate_all_plots(csv_path)
+    # generate_all_plots(csv_path)
 
 
     
