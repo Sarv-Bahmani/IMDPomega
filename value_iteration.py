@@ -2,7 +2,6 @@ import statistics
 import matplotlib.pyplot as plt
 import time
 from typing import Dict, Tuple, FrozenSet, List
-import csv
 from pathlib import Path
 
 import sys
@@ -129,6 +128,31 @@ def value_iteration_scope(P, eps):
         "Execution_time_sec": execution_time
     }
 
+def plot_init_evolution_val_iter(res, add):
+    mean_L_list = res["mean_L_list"]
+    mean_U_list = res["mean_U_list"]
+
+    x_values = list(range(iter_period, (len(mean_L_list)+1) * iter_period, iter_period))
+
+    plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
+    plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
+
+    plt.xlabel('Iterations')
+    plt.ylabel('Probability')
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f"Evolution_InitSt_VI_{add}.png")
+
+
+
+
+
+
+
+
+
+
 
 
 def constants_vs_var(adds, variable):
@@ -151,106 +175,9 @@ def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
     plt.grid(True)
     plt.savefig(f"{pic_name}.png")
 
-def update_csv_reslt(csv_path, address, res):
-    rows = []
-    with csv_path.open(newline='', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        fieldnames = reader.fieldnames
-        rows = list(reader)
-
-    row_found = False
-    for row in rows:
-        if row["address"].strip() == address:
-            row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
-            row["Convergence_iteration"] = str(res["Convergence_iteration"])
-            row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
-            row_found = True
-            break
-
-    if not row_found:
-        row = {fn: "" for fn in fieldnames}
-        row["address"] = address
-        row["Noise Samples"] = str(20000)
-        row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
-        row["Convergence_iteration"] = str(res["Convergence_iteration"])
-        row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
-        rows.append(row)
-
-    with csv_path.open("w", newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-
-
-def run_imdp(address, noise_samples, eps=1e-9):
-    I = IMDP(address=address, noise_samples=noise_samples)
-    all_labsets = {I.label[s] for s in I.states}
-    B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=True)
-    P = Product(I, B)
-    
-
-
-    # print('product is build')
-    print("Number of product states:", len(P.states))
-    common_init_target = P.init_states & P.target
-    common_init_losing = P.init_states & P.losing_sink
-    common_init_losing_or_ddlck = len({
-    x for x in P.init_states 
-    if P.imdp.label.get(x[0], frozenset()) & frozenset({"failed", "deadlock"})})
-    # common_target_losing = P.target & P.losing_sink
-
-    print("Init ∩ Target:", len(common_init_target))
-    print("Init ∩ Losing:", len(common_init_losing))
-    print("Init ∩ (Losing ∪ Deadlock):", common_init_losing_or_ddlck)
-    # print("Target ∩ Losing:", len(common_target_losing))
-    print("target states:", len(P.target))
-    print("losing states:", len(P.losing_sink))
-
-    only_init = P.init_states - (P.target | P.losing_sink)
-    print("only init:", len(only_init))
-
-    all_inits = len(P.init_states)
-    print("all inits:", all_inits)
 
 
 
 
-
-    res = value_iteration_scope(P, eps)
-    res.update({"Qualitative_time_sec": P.qualitative_time_sec})
-    update_csv_reslt(csv_path, address, res)
-    return res
-
-
-adds = [
-'Ab_UAV_10-16-2025_20-48-14',
-'Ab_UAV_10-16-2025_13-57-21',
-'Ab_UAV_10-16-2025_15-11-36',
-'Ab_UAV_10-16-2025_15-16-07',
-'Ab_UAV_10-16-2025_15-25-59',
-'Ab_UAV_10-16-2025_15-29-37'
-]
-# for add in adds:
-
-add = adds[0]
-res = run_imdp(address=add, noise_samples=20000, eps=1e-9)
-
-
-
-
-mean_L_list = res["mean_L_list"]
-mean_U_list = res["mean_U_list"]
-
-x_values = list(range(iter_period, (len(mean_L_list)+1) * iter_period, iter_period))
-
-plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
-plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
-
-plt.xlabel('Iterations')
-plt.ylabel('Probability')
-plt.grid(True, linestyle='--', alpha=0.6)
-plt.legend()
-plt.tight_layout()
-plt.savefig(f"Evolution_MeanL_MeanU_InitSt_VI_{add}.png")
 
 
