@@ -24,7 +24,7 @@ def update_csv_reslt(csv_path, address, res):
     row_found = False
     for row in rows:
         if row["address"].strip() == address:
-            row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
+            row["Val_Iter_Execution_time_sec"] = f"{res['Val_Iter_Execution_time_sec']:.6f}"
             row["Convergence_iteration"] = str(res["Convergence_iteration"])
             row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
             row_found = True
@@ -34,7 +34,7 @@ def update_csv_reslt(csv_path, address, res):
         row = {fn: "" for fn in fieldnames}
         row["address"] = address
         row["Noise Samples"] = str(20000)
-        row["Execution_time_sec"] = f"{res['Execution_time_sec']:.6f}"
+        row["Val_Iter_Execution_time_sec"] = f"{res['Val_Iter_Execution_time_sec']:.6f}"
         row["Convergence_iteration"] = str(res["Convergence_iteration"])
         row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
         rows.append(row)
@@ -86,13 +86,13 @@ def generate_all_plots(csv_path):
             record = {}
             record['Transitions'] = int(row['Transitions'])
             record['Exported States (PRISM)'] = int(row['Exported States (PRISM)'])
-            record['VI_Execution_time_sec'] = float(row['VI_Execution_time_sec'])
+            record['Val_Iter_Execution_time_sec'] = float(row['Val_Iter_Execution_time_sec'])
             record['Convergence_iteration'] = int(row['Convergence_iteration'])
             record['Qualitative_time_sec'] = float(row['Qualitative_time_sec'])
             data.append(record)
     
-    # Plot 1: Transitions vs VI_Execution_time_sec
-    plot_x(data, 'Transitions', 'VI_Execution_time_sec', 
+    # Plot 1: Transitions vs Val_Iter_Execution_time_sec
+    plot_x(data, 'Transitions', 'Val_Iter_Execution_time_sec', 
            'Transitions_vs_VI_Execution_time', 'Transitions')
     
     # Plot 2: Transitions vs Convergence_iteration
@@ -103,8 +103,8 @@ def generate_all_plots(csv_path):
     plot_x(data, 'Transitions', 'Qualitative_time_sec', 
             'Transitions_vs_Qualitative_time', 'Transitions')
     
-    # Plot 4: Exported States (PRISM) vs VI_Execution_time_sec
-    plot_x(data, 'Exported States (PRISM)', 'VI_Execution_time_sec', 
+    # Plot 4: Exported States (PRISM) vs Val_Iter_Execution_time_sec
+    plot_x(data, 'Exported States (PRISM)', 'Val_Iter_Execution_time_sec', 
            'ExportedStates_vs_VI_Execution_time', 'Exported States (PRISM)')
     
     # Plot 5: Exported States (PRISM) vs Convergence_iteration
@@ -121,11 +121,11 @@ def generate_all_plots(csv_path):
 if __name__ == "__main__":
     adds = [
     'Ab_UAV_10-16-2025_20-48-14',
-    # 'Ab_UAV_10-16-2025_13-57-21',
-    # 'Ab_UAV_10-16-2025_15-11-36',
-    # 'Ab_UAV_10-16-2025_15-16-07',
-    # 'Ab_UAV_10-16-2025_15-25-59',
-    # 'Ab_UAV_10-16-2025_15-29-37'
+    'Ab_UAV_10-16-2025_13-57-21',
+    'Ab_UAV_10-16-2025_15-11-36',
+    'Ab_UAV_10-16-2025_15-16-07',
+    'Ab_UAV_10-16-2025_15-25-59',
+    'Ab_UAV_10-16-2025_15-29-37'
     ]
     for add in adds:
         print(f"Will Process IMDP at address: {add}")

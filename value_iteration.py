@@ -126,14 +126,14 @@ def value_iteration_scope(P, eps):
         "L": L,   
         "U": U,
         "Convergence_iteration": iterator,
-        "Execution_time_sec": execution_time
+        "Val_Iter_Execution_time_sec": execution_time
     }
 
 def plot_init_evolution_val_iter(res, add):
     mean_L_list = res["mean_L_list"]
     mean_U_list = res["mean_U_list"]
 
-    x_values = list(range(iter_period, (len(mean_L_list)+1) * iter_period, iter_period))
+    x_values = list(range(iter_init_save, (len(mean_L_list)+1) * iter_init_save, iter_init_save))
 
     plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
     plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
