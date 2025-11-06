@@ -153,8 +153,6 @@ def plot_init_evolution_val_iter(res, add):
 
 
 
-
-
 def constants_vs_var(adds, variable):
     results = []
     for add in adds:
@@ -165,15 +163,7 @@ def constants_vs_var(adds, variable):
                     variable_val = float(row[variable])
                     results.append({variable: variable_val, "Execution_time_sec": float(row["Execution_time_sec"])})
 
-def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
-    results.sort(key=lambda d: d[x_var])
-    xs = [d[x_var]/unit for d in results]
-    ys = [d[y_var] for d in results]
-    plt.figure()
-    plt.plot(xs, ys, marker="o")
-    plt.xlabel(x_lab)
-    plt.grid(True)
-    plt.savefig(f"{pic_name}.png")
+
 
 
 

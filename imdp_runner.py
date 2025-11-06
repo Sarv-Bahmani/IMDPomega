@@ -1,5 +1,6 @@
 import csv
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 
 from imdp import IMDP
@@ -44,7 +45,15 @@ def update_csv_reslt(csv_path, address, res):
         writer.writerows(rows)
 
 
-
+def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
+    results.sort(key=lambda d: d[x_var])
+    xs = [d[x_var]/unit for d in results]
+    ys = [d[y_var] for d in results]
+    plt.figure()
+    plt.plot(xs, ys, marker="o")
+    plt.xlabel(x_lab)
+    plt.grid(True)
+    plt.savefig(f"{pic_name}.png")
 
 
 if __name__ == "__main__":
@@ -65,6 +74,7 @@ if __name__ == "__main__":
     all_labsets = {I.label[s] for s in I.states}
     B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=True)
     P = Product(I, B)
+
 
 
 
@@ -103,9 +113,8 @@ if __name__ == "__main__":
 
     results_strtgy = {}
 
-
+    results.update({"Qualitative_time_sec": P.qualitative_time_sec})
     results.update(results_val_iter)
     results.update(results_strtgy)
-    results.update({"Qualitative_time_sec": P.qualitative_time_sec})
 
     update_csv_reslt(csv_path, add, results)
