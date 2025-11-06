@@ -18,7 +18,8 @@ ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
 
-iter_period = 1
+iter_init_save = 1
+iter_print = 5
 up_contrac_fctr = 0.999
 
 from imdp import IMDP
@@ -69,8 +70,8 @@ def interval_iteration(P, eps, max_iter = 51):
 
     for iterator in range(max_iter):
 
-        if iterator % iter_period == 0 and iterator > 1:            
-            if iterator % 10 == 0:
+        if iterator % iter_init_save == 0 and iterator > 1:            
+            if iterator % iter_print == 0:
                 print("Iteration:", iterator)
             mean_L, mean_U = calc_init_mean(P, L, U)
             mean_L_list.append(mean_L)
