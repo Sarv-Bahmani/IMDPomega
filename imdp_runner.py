@@ -128,10 +128,14 @@ if __name__ == "__main__":
     # 'Ab_UAV_10-16-2025_15-29-37'
     ]
     for add in adds:
+        print(f"Will Process IMDP at address: {add}")
         I = IMDP(address=add, noise_samples=noise_samples)
+        print("\tIMDP is loaded.")
         all_labsets = {I.label[s] for s in I.states}
         B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=True)
+        print("\tWill build product...")
         P = Product(I, B)
+        print("\tProduct is built.")
 
 
 
@@ -165,9 +169,10 @@ if __name__ == "__main__":
 
 
         results = {}
-        
+        print("\t\tWill run value iteration...")
         results_val_iter = value_iteration_scope(P, eps=1e-9)
         plot_init_evolution_val_iter(results_val_iter, add)
+        print("\t\tValue iteration is done.")
 
         results_strtgy = {}
 
@@ -177,7 +182,7 @@ if __name__ == "__main__":
 
         update_csv_reslt(csv_path, add, results)
 
-    # generate_all_plots(csv_path)
+    generate_all_plots(csv_path)
 
 
     
