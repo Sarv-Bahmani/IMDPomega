@@ -19,7 +19,7 @@ Label = FrozenSet[str]
 
 
 iter_period = 2
-
+up_contrac_fctr = 0.8
 
 from imdp import IMDP
 from automata import Automata
@@ -97,7 +97,7 @@ def interval_iteration(P, eps, max_iter = 51):
                         continue
                     iv_list = [(y, l, u) for y, (l, u) in iv.items()]
                     mexp = expectation_for_action(iv_list, L)
-                    Mexp = expectation_for_action(iv_list, U, alpha=0.999)
+                    Mexp = expectation_for_action(iv_list, U, alpha=up_contrac_fctr)
                     best_min = max(best_min, mexp)
                     best_max = max(best_max, Mexp)
                 newL = best_min
@@ -153,15 +153,15 @@ def plot_init_evolution_val_iter(res, add):
 
 
 
-def constants_vs_var(adds, variable):
-    results = []
-    for add in adds:
-        with csv_path.open(newline='', encoding="utf-8") as f:
-            rows = csv.DictReader(f)
-            for row in rows:
-                if row["address"].strip() == add:
-                    variable_val = float(row[variable])
-                    results.append({variable: variable_val, "Execution_time_sec": float(row["Execution_time_sec"])})
+# def constants_vs_var(adds, variable):
+#     results = []
+#     for add in adds:
+#         with csv_path.open(newline='', encoding="utf-8") as f:
+#             rows = csv.DictReader(f)
+#             for row in rows:
+#                 if row["address"].strip() == add:
+#                     variable_val = float(row[variable])
+#                     results.append({variable: variable_val, "Execution_time_sec": float(row["Execution_time_sec"])})
 
 
 
