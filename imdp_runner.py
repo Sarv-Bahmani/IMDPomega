@@ -121,11 +121,11 @@ def generate_all_plots(csv_path):
 if __name__ == "__main__":
     adds = [
     'Ab_UAV_10-16-2025_20-48-14',
-    'Ab_UAV_10-16-2025_13-57-21',
-    'Ab_UAV_10-16-2025_15-11-36',
-    'Ab_UAV_10-16-2025_15-16-07',
-    'Ab_UAV_10-16-2025_15-25-59',
-    'Ab_UAV_10-16-2025_15-29-37'
+    # 'Ab_UAV_10-16-2025_13-57-21',
+    # 'Ab_UAV_10-16-2025_15-11-36',
+    # 'Ab_UAV_10-16-2025_15-16-07',
+    # 'Ab_UAV_10-16-2025_15-25-59',
+    # 'Ab_UAV_10-16-2025_15-29-37'
     ]
     for add in adds:
         print(f"Will Process IMDP at address: {add}")
@@ -169,6 +169,7 @@ if __name__ == "__main__":
 
 
         results = {}
+        
         print("\t\tWill run value iteration...")
         results_val_iter = value_iteration_scope(P, eps=1e-9)
         plot_init_evolution_val_iter(results_val_iter, add)
@@ -180,9 +181,11 @@ if __name__ == "__main__":
         results.update(results_val_iter)
         results.update(results_strtgy)
 
+        print(f"\tUpdating results to CSV...")
         update_csv_reslt(csv_path, add, results)
+        print(f"\tCSV is updated.")
 
-    generate_all_plots(csv_path)
+    # generate_all_plots(csv_path)
 
 
     
