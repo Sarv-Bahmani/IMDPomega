@@ -45,25 +45,8 @@ def update_csv_reslt(csv_path, address, res):
         writer.writerows(rows)
 
 
-def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
-    results.sort(key=lambda d: d[x_var])
-    xs = [d[x_var]/unit for d in results]
-    ys = [d[y_var] for d in results]
-    plt.figure()
-    plt.plot(xs, ys, marker="o")
-    plt.xlabel(x_lab)
-    plt.grid(True)
-    plt.savefig(f"{pic_name}.png")
-
-
-
-import csv
-import matplotlib.pyplot as plt
-from pathlib import Path
-
 
 def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
-    """Plot function as provided"""
     results.sort(key=lambda d: d[x_var])
     xs = [d[x_var]/unit for d in results]
     ys = [d[y_var] for d in results]
@@ -141,7 +124,6 @@ if __name__ == "__main__":
 
 
 
-        # # print('product is build')
         # print("Number of product states:", len(P.states))
         # common_init_target = P.init_states & P.target
         # common_init_losing = P.init_states & P.losing_sink
