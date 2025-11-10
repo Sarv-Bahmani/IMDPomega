@@ -144,6 +144,7 @@ def plot_init_evolution_val_iter(res, add):
     plt.legend()
     plt.tight_layout()
     plt.savefig(f"Evolution_InitSt_VI_{add}.png")
+    plt.close()
 
 
 
