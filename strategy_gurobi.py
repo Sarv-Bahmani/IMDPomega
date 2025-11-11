@@ -7,6 +7,19 @@ from typing import Dict, Set, Tuple, FrozenSet
 import time
 
 
+address_str = "address"
+val_iter_time_str = "Val_Iter_Execution_time_sec"
+val_iter_converge_iter_str = "Val_Iter_Convergence_iteration"
+qual_time_str = "Qualitative_time_sec"
+transitions_str = 'Transitions'
+Exported_States_PRISM_str = 'Exported States (PRISM)'
+
+
+strat_imprv_Values_str = "Stratgy_Imprv_Values"
+strat_imprv_Convergence_iteration_str = "Stratgy_Imprv_Convergence_iteration"
+strat_imprv_Execution_time_sec_str = "Stratgy_Imprv_Execution_time_sec"
+
+
 State = int
 QState = int
 Action = str
@@ -42,6 +55,7 @@ def initialize_env_policy_random(P):
 
 def solve_player_LP(env_policy, P):
     m = gp.Model("player_strategy")
+    m.setParam('OutputFlag', 0)
     
     V = {}
     for x in P.states:
@@ -96,61 +110,46 @@ def extract_optimal_actions(V_result, env_policy, P):
         player_strategy[state] = best_action
     return player_strategy
 
+
 def update_environment_policy(V, player_strategy, P):
     env_policy = {}
     
     for state in P.states:
         if state in P.target or state in P.losing_sink:
             continue
+        
+        actions = P.actions.get(state, ())
+        # action = player_strategy[state] # **********************************
+        for action in actions:
+            intervals = P.trans_prod.get((state, action), {})
             
-        action = player_strategy[state]
-        intervals = P.trans_prod.get((state, action), {})
-        
-        dist = {}
-        residual = 1.0
-        
-        for y, (l, u) in intervals.items():
-            dist[y] = l
-            residual -= l
-        
-        sorted_states = sorted(intervals.keys(), key=lambda s: V.get(s, 0))
-        
-        for y in sorted_states:
-            l, u = intervals[y]
-            add = min(u - dist[y], residual)
-            dist[y] += add
-            residual -= add
-            if residual <= 0:
-                break
-        
-        env_policy[(state, action)] = dist
+            dist = {}
+            residual = 1.0
+            
+            for y, (l, u) in intervals.items():
+                dist[y] = l
+                residual -= l
+            
+            sorted_states = sorted(intervals.keys(), key=lambda s: V.get(s, 0))
+            
+            for y in sorted_states:
+                l, u = intervals[y]
+                add = min(u - dist[y], residual)
+                dist[y] += add
+                residual -= add
+                if residual <= 0:
+                    break
+            
+            env_policy[(state, action)] = dist
     
     return env_policy
+
 
 def converged(V_old, V_new, tol):
     for state in V_old.keys():
         if abs(V_old[state] - V_new[state]) > tol:
             return False
     return True
-
-
-
-
-
-
-
-
-address = 'Ab_UAV_10-16-2025_20-48-14'
-noise_samples = 20000
-I = IMDP(address=address, noise_samples=noise_samples)
-
-
-all_labsets = {I.label[s] for s in I.states}
-B = Automata(all_labsets, "my_automaton.hoa")
-P = Product(I, B)
-
-
-
 
 
 def strategy_improve(P, eps):
@@ -183,9 +182,9 @@ def strategy_improve_scope(P, eps):
         # "mean_U_list": mean_U_list,
         # "L": L,   
         # "U": U,
-        "Values": values,
-        "Convergence_iteration": iterator,
-        "strat_imprv_Execution_time_sec": execution_time
+        strat_imprv_Values_str: values,
+        strat_imprv_Convergence_iteration_str: iterator,
+        strat_imprv_Execution_time_sec_str: execution_time
     }
 
 
