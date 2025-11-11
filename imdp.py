@@ -12,7 +12,7 @@ lab = "Abstraction_interval.lab"
 tra = "Abstraction_interval.tra"
 
 csv_path = Path("gen_imdp_info/IMDPs_info.csv")
-root_models = Path("MDPs")
+root_models = Path("data/raw/MDPs")
 
 State = int
 QState = int

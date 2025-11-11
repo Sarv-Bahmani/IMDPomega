@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-import pandas as pd
+# import pandas as pd
 
 from imdp import IMDP
 from automata import Automata
@@ -184,7 +184,9 @@ if __name__ == "__main__":
         plot_init_evolution_val_iter(results_val_iter, add)
         print("\t\tValue iteration is done.")
 
+        print("\t\tWill run strategy improve ...")
         results_strtgy = strategy_improve_scope(P, eps)
+        print("\t\tstrategy improve is done.")
 
         results.update({qual_time_str: P.qualitative_time_sec})
         results.update(results_val_iter)
@@ -195,7 +197,7 @@ if __name__ == "__main__":
         print(f"\tCSV is updated.")
 
 
-        pd.DataFrame.from_dict(results, orient="index").to_csv("results.csv")
+        # pd.DataFrame.from_dict(results, orient="index").to_csv("results.csv")
 
 
 
