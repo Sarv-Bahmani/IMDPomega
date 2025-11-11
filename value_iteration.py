@@ -111,7 +111,7 @@ def interval_iteration(P, eps, max_iter = 51):
         # gap = max(U[x] - L[x] for x in P.states)
         # if max(deltaL, deltaU) <= eps and gap <= eps:
         if all(U[x] <= L[x] for x in P.states):
-            print("breakkkkkk Converged at iteration", iterator)
+            print("VALUE ITERATION breakkkkkk Converged at iteration", iterator)
             break
 
     return L, U, iterator, mean_L_list, mean_U_list
