@@ -188,4 +188,4 @@ def strategy_improve_scope(P, eps):
     }
 
 
-results_strtgy = strategy_improve_scope(P, eps=1e-9)
+# results_strtgy = strategy_improve_scope(P, eps=1e-9)
