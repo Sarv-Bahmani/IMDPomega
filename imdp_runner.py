@@ -8,11 +8,21 @@ from automata import Automata
 from product import Product
 
 from value_iteration import value_iteration_scope, plot_init_evolution_val_iter
+from strategy_gurobi import strategy_improve_scope
 
 noise_samples=20000
+noise_samples_str = "Noise Samples"
 csv_path = Path("gen_imdp_info/IMDPs_info.csv")
 root_models = Path("MDPs")
 
+
+
+
+
+address_str = "address"
+val_iter_time_str = "Val_Iter_Execution_time_sec"
+val_iter_converge_iter_str = "Convergence_iteration"
+qual_time_str = "Qualitative_time_sec"
 
 def update_csv_reslt(csv_path, address, res):
     rows = []
@@ -23,20 +33,20 @@ def update_csv_reslt(csv_path, address, res):
 
     row_found = False
     for row in rows:
-        if row["address"].strip() == address:
-            row["Val_Iter_Execution_time_sec"] = f"{res['Val_Iter_Execution_time_sec']:.6f}"
-            row["Convergence_iteration"] = str(res["Convergence_iteration"])
-            row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
+        if row[address_str].strip() == address:
+            row[val_iter_time_str] = f"{res[val_iter_time_str]:.6f}"
+            row[val_iter_converge_iter_str] = str(res[val_iter_converge_iter_str])
+            row[qual_time_str] = str(res.get(qual_time_str, ""))
             row_found = True
             break
 
     if not row_found:
         row = {fn: "" for fn in fieldnames}
-        row["address"] = address
-        row["Noise Samples"] = str(20000)
-        row["Val_Iter_Execution_time_sec"] = f"{res['Val_Iter_Execution_time_sec']:.6f}"
-        row["Convergence_iteration"] = str(res["Convergence_iteration"])
-        row["Qualitative_time_sec"] = str(res.get("Qualitative_time_sec", ""))
+        row[address_str] = address
+        row[noise_samples_str] = str(20000)
+        row[val_iter_time_str] = f"{res[val_iter_time_str]:.6f}"
+        row[val_iter_converge_iter_str] = str(res[val_iter_converge_iter_str])
+        row[qual_time_str] = str(res.get(qual_time_str, ""))
         rows.append(row)
 
     with csv_path.open("w", newline='', encoding='utf-8') as f:
@@ -151,15 +161,15 @@ if __name__ == "__main__":
 
 
         results = {}
-        
+        eps = 1e-9
         print("\t\tWill run value iteration...")
-        results_val_iter = value_iteration_scope(P, eps=1e-9)
+        results_val_iter = value_iteration_scope(P, eps)
         plot_init_evolution_val_iter(results_val_iter, add)
         print("\t\tValue iteration is done.")
 
-        results_strtgy = {}
+        results_strtgy = strategy_improve_scope(P, eps)
 
-        results.update({"Qualitative_time_sec": P.qualitative_time_sec})
+        results.update({qual_time_str: P.qualitative_time_sec})
         results.update(results_val_iter)
         results.update(results_strtgy)
 
