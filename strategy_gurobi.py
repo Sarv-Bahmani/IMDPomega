@@ -4,6 +4,8 @@ from automata import Automata
 from product import Product
 import random
 from typing import Dict, Set, Tuple, FrozenSet
+import time
+
 
 State = int
 QState = int
@@ -37,12 +39,6 @@ def initialize_env_policy_random(P):
         env_policy[(x, a)] = dist
 
     return env_policy
-
-
-
-
-
-
 
 def solve_player_LP(env_policy, P):
     m = gp.Model("player_strategy")
@@ -78,8 +74,6 @@ def solve_player_LP(env_policy, P):
     player_strategy = extract_optimal_actions(V_result, env_policy, P)
     
     return V_result, player_strategy
-
-
 
 def extract_optimal_actions(V_result, env_policy, P):
     player_strategy = {}
@@ -133,14 +127,13 @@ def update_environment_policy(V, player_strategy, P):
     
     return env_policy
 
-
-
-
 def converged(V_old, V_new, tol):
     for state in V_old.keys():
         if abs(V_old[state] - V_new[state]) > tol:
             return False
     return True
+
+
 
 
 
@@ -156,25 +149,44 @@ all_labsets = {I.label[s] for s in I.states}
 B = Automata(all_labsets, "my_automaton.hoa")
 P = Product(I, B)
 
-env_policy = initialize_env_policy_random(P)
-
-V = {}
-for state in P.states:
-    if state in P.target:
-        V[state] = 1.0
-    elif state in P.losing_sink:
-        V[state] = 0.0
-    else:
-        V[state] = 0.5 #????????????????????????? 
 
 
 
-max_iterations = 20
-for iteration in range(max_iterations):
-    V_new, player_strategy = solve_player_LP(env_policy, P)
-    
-    env_policy = update_environment_policy(V_new, player_strategy, P)
-    
-    if converged(V, V_new, tol=1e-1):
-        break
-    V = V_new
+
+def strategy_improve(P, eps):
+    env_policy = initialize_env_policy_random(P)
+    V = {}
+    for state in P.states:
+        if   state in P.target     : V[state] = 1.0
+        elif state in P.losing_sink: V[state] = 0.0
+        else                       : V[state] = 0.5 #????????????????????????? 
+
+    max_iterations = 51
+    for iterator in range(max_iterations):
+        V_new, player_strategy = solve_player_LP(env_policy, P)
+        
+        env_policy = update_environment_policy(V_new, player_strategy, P)
+        
+        if converged(V, V_new, tol=eps):
+            print("STRATEGY IMPROVEMENT breakkkkkk Converged at iteration", iterator)
+            break
+        V = V_new
+    return V, iterator
+
+
+def strategy_improve_scope(P, eps):
+    start_time = time.perf_counter()
+    values, iterator  = strategy_improve(P, eps=eps)
+    execution_time = time.perf_counter() - start_time
+    return {
+        # "mean_L_list": mean_L_list,
+        # "mean_U_list": mean_U_list,
+        # "L": L,   
+        # "U": U,
+        "Values": values,
+        "Convergence_iteration": iterator,
+        "strat_imprv_Execution_time_sec": execution_time
+    }
+
+
+results_strtgy = strategy_improve_scope(P, eps=1e-9)
