@@ -25,7 +25,7 @@ Action = str
 ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
-iter_print = 2
+iter_print = 1
 
 
 def initialize_env_policy_random(P):
@@ -166,12 +166,15 @@ def strategy_improve(P, eps):
         if iterator % iter_print == 0:
             print("Iteration:", iterator)
 
+        print("will go through solving LP...")
         V_new, player_strategy = solve_player_LP(env_policy, P)
         
+        print("will update env....")
         env_policy = update_environment_policy(V_new, player_strategy, P)
         
         if converged(V, V_new, tol=eps):
             print("STRATEGY IMPROVEMENT breakkkkkk Converged at iteration", iterator)
+            V = V_new
             break
         V = V_new
     return V, iterator
