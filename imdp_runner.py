@@ -2,6 +2,7 @@ import csv
 from pathlib import Path
 import matplotlib.pyplot as plt
 
+import pandas as pd
 
 from imdp import IMDP
 from automata import Automata
@@ -21,10 +22,15 @@ root_models = Path("MDPs")
 
 address_str = "address"
 val_iter_time_str = "Val_Iter_Execution_time_sec"
-val_iter_converge_iter_str = "Convergence_iteration"
+val_iter_converge_iter_str = "Val_Iter_Convergence_iteration"
 qual_time_str = "Qualitative_time_sec"
 transitions_str = 'Transitions'
 Exported_States_PRISM_str = 'Exported States (PRISM)'
+
+
+strat_imprv_Values_str = "Stratgy_Imprv_Values"
+strat_imprv_Convergence_iteration_str = "Stratgy_Imprv_Convergence_iteration"
+strat_imprv_Execution_time_sec_str = "Stratgy_Imprv_Execution_time_sec"
 
 
 
@@ -32,6 +38,7 @@ def update_row(row, res):
     row[val_iter_time_str] = f"{res[val_iter_time_str]:.6f}"
     row[val_iter_converge_iter_str] = str(res[val_iter_converge_iter_str])
     row[qual_time_str] = str(res.get(qual_time_str, ""))
+
         
 
 def update_csv_reslt(csv_path, address, res):
@@ -139,7 +146,6 @@ if __name__ == "__main__":
 
 
 
-
         # print("Number of product states:", len(P.states))
         # common_init_target = P.init_states & P.target
         # common_init_losing = P.init_states & P.losing_sink
@@ -182,6 +188,11 @@ if __name__ == "__main__":
         print(f"\tUpdating results to CSV...")
         update_csv_reslt(csv_path, add, results)
         print(f"\tCSV is updated.")
+
+
+        pd.DataFrame.from_dict(results, orient="index").to_csv("results.csv")
+
+
 
     # generate_all_plots(csv_path)
 
