@@ -6,7 +6,6 @@ import random
 from typing import Dict, Set, Tuple, FrozenSet
 import time
 
-
 address_str = "address"
 val_iter_time_str = "Val_Iter_Execution_time_sec"
 val_iter_converge_iter_str = "Val_Iter_Convergence_iteration"
@@ -25,6 +24,8 @@ QState = int
 Action = str
 ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
+
+iter_print = 2
 
 
 def initialize_env_policy_random(P):
@@ -162,6 +163,9 @@ def strategy_improve(P, eps):
 
     max_iterations = 51
     for iterator in range(max_iterations):
+        if iterator % iter_print == 0:
+            print("Iteration:", iterator)
+
         V_new, player_strategy = solve_player_LP(env_policy, P)
         
         env_policy = update_environment_policy(V_new, player_strategy, P)
