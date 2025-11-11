@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 import matplotlib.pyplot as plt
 
-# import pandas as pd
+import pandas as pd
 
 from imdp import IMDP
 from automata import Automata
@@ -157,10 +157,10 @@ def generate_all_plots(csv_path):
 
 if __name__ == "__main__":
     adds = [
-    'Ab_UAV_10-16-2025_20-48-14',
-    'Ab_UAV_10-16-2025_13-57-21',
-    'Ab_UAV_10-16-2025_15-11-36',
-    'Ab_UAV_10-16-2025_15-16-07',
+    # 'Ab_UAV_10-16-2025_20-48-14',
+    # 'Ab_UAV_10-16-2025_13-57-21',
+    # 'Ab_UAV_10-16-2025_15-11-36',
+    # 'Ab_UAV_10-16-2025_15-16-07',
     'Ab_UAV_10-16-2025_15-25-59',
     'Ab_UAV_10-16-2025_15-29-37'
     ]
@@ -201,18 +201,19 @@ if __name__ == "__main__":
 
 
 
-
-
         results = {}
         eps = 1e-9
+
+        print("\t\tWill run strategy improve ...")
+        results_strtgy = strategy_improve_scope(P, eps)
+        print("\t\tstrategy improve is done.")
+
+
         print("\t\tWill run value iteration...")
         results_val_iter = value_iteration_scope(P, eps)
         plot_init_evolution_val_iter(results_val_iter, add)
         print("\t\tValue iteration is done.")
 
-        print("\t\tWill run strategy improve ...")
-        results_strtgy = strategy_improve_scope(P, eps)
-        print("\t\tstrategy improve is done.")
 
         results.update({qual_time_str: P.qualitative_time_sec})
         results.update(results_val_iter)
@@ -223,7 +224,7 @@ if __name__ == "__main__":
         print(f"\tCSV is updated.")
 
 
-        # pd.DataFrame.from_dict(results, orient="index").to_csv("results.csv")
+        pd.DataFrame.from_dict(results, orient="index").to_csv(f"results{add}.csv")
 
 
 
