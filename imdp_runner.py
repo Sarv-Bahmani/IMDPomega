@@ -23,6 +23,16 @@ address_str = "address"
 val_iter_time_str = "Val_Iter_Execution_time_sec"
 val_iter_converge_iter_str = "Convergence_iteration"
 qual_time_str = "Qualitative_time_sec"
+transitions_str = 'Transitions'
+Exported_States_PRISM_str = 'Exported States (PRISM)'
+
+
+
+def update_row(row, res):
+    row[val_iter_time_str] = f"{res[val_iter_time_str]:.6f}"
+    row[val_iter_converge_iter_str] = str(res[val_iter_converge_iter_str])
+    row[qual_time_str] = str(res.get(qual_time_str, ""))
+        
 
 def update_csv_reslt(csv_path, address, res):
     rows = []
@@ -34,9 +44,7 @@ def update_csv_reslt(csv_path, address, res):
     row_found = False
     for row in rows:
         if row[address_str].strip() == address:
-            row[val_iter_time_str] = f"{res[val_iter_time_str]:.6f}"
-            row[val_iter_converge_iter_str] = str(res[val_iter_converge_iter_str])
-            row[qual_time_str] = str(res.get(qual_time_str, ""))
+            update_row(row, res)
             row_found = True
             break
 
@@ -44,9 +52,7 @@ def update_csv_reslt(csv_path, address, res):
         row = {fn: "" for fn in fieldnames}
         row[address_str] = address
         row[noise_samples_str] = str(20000)
-        row[val_iter_time_str] = f"{res[val_iter_time_str]:.6f}"
-        row[val_iter_converge_iter_str] = str(res[val_iter_converge_iter_str])
-        row[qual_time_str] = str(res.get(qual_time_str, ""))
+        update_row(row, res)
         rows.append(row)
 
     with csv_path.open("w", newline='', encoding='utf-8') as f:
@@ -77,36 +83,36 @@ def generate_all_plots(csv_path):
         reader = csv.DictReader(f)
         for row in reader:
             record = {}
-            record['Transitions'] = int(row['Transitions'])
-            record['Exported States (PRISM)'] = int(row['Exported States (PRISM)'])
-            record['Val_Iter_Execution_time_sec'] = float(row['Val_Iter_Execution_time_sec'])
-            record['Convergence_iteration'] = int(row['Convergence_iteration'])
-            record['Qualitative_time_sec'] = float(row['Qualitative_time_sec'])
+            record[transitions_str] = int(row[transitions_str])
+            record[Exported_States_PRISM_str] = int(row[Exported_States_PRISM_str])
+            record[val_iter_time_str] = float(row[val_iter_time_str])
+            record[val_iter_converge_iter_str] = int(row[val_iter_converge_iter_str])
+            record[qual_time_str] = float(row[qual_time_str])
             data.append(record)
     
     # Plot 1: Transitions vs Val_Iter_Execution_time_sec
-    plot_x(data, 'Transitions', 'Val_Iter_Execution_time_sec', 
-           'Transitions_vs_VI_Execution_time', 'Transitions')
+    plot_x(data, transitions_str, val_iter_time_str, 
+           'Transitions_vs_VI_Execution_time', transitions_str)
     
     # Plot 2: Transitions vs Convergence_iteration
-    plot_x(data, 'Transitions', 'Convergence_iteration', 
-           'Transitions_vs_Convergence_iteration', 'Transitions')
+    plot_x(data, transitions_str, val_iter_converge_iter_str, 
+           'Transitions_vs_Convergence_iteration', transitions_str)
     
     # Plot 3: Transitions vs Qualitative_time_sec
-    plot_x(data, 'Transitions', 'Qualitative_time_sec', 
-            'Transitions_vs_Qualitative_time', 'Transitions')
+    plot_x(data, transitions_str, qual_time_str, 
+            'Transitions_vs_Qualitative_time', transitions_str)
     
     # Plot 4: Exported States (PRISM) vs Val_Iter_Execution_time_sec
-    plot_x(data, 'Exported States (PRISM)', 'Val_Iter_Execution_time_sec', 
-           'ExportedStates_vs_VI_Execution_time', 'Exported States (PRISM)')
+    plot_x(data, Exported_States_PRISM_str, val_iter_time_str, 
+           'ExportedStates_vs_VI_Execution_time', Exported_States_PRISM_str)
     
     # Plot 5: Exported States (PRISM) vs Convergence_iteration
-    plot_x(data, 'Exported States (PRISM)', 'Convergence_iteration', 
-           'ExportedStates_vs_Convergence_iteration', 'Exported States (PRISM)')
+    plot_x(data, Exported_States_PRISM_str, val_iter_converge_iter_str, 
+           'ExportedStates_vs_Convergence_iteration', Exported_States_PRISM_str)
     
     # Plot 6: Exported States (PRISM) vs Qualitative_time_sec
-    plot_x(data, 'Exported States (PRISM)', 'Qualitative_time_sec', 
-            'ExportedStates_vs_Qualitative_time', 'Exported States (PRISM)')
+    plot_x(data, Exported_States_PRISM_str, qual_time_str, 
+            'ExportedStates_vs_Qualitative_time', Exported_States_PRISM_str)
 
 
 
