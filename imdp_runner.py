@@ -35,9 +35,14 @@ strat_imprv_Execution_time_sec_str = "Stratgy_Imprv_Execution_time_sec"
 
 
 def update_row(row, res):
+    row[qual_time_str] = str(res.get(qual_time_str, ""))
+
     row[val_iter_time_str] = f"{res[val_iter_time_str]:.6f}"
     row[val_iter_converge_iter_str] = str(res[val_iter_converge_iter_str])
-    row[qual_time_str] = str(res.get(qual_time_str, ""))
+    
+    row[strat_imprv_Execution_time_sec_str] = str(res[strat_imprv_Execution_time_sec_str])
+    row[strat_imprv_Convergence_iteration_str] = str(res[strat_imprv_Convergence_iteration_str])
+
 
         
 
@@ -127,11 +132,11 @@ def generate_all_plots(csv_path):
 if __name__ == "__main__":
     adds = [
     'Ab_UAV_10-16-2025_20-48-14',
-    # 'Ab_UAV_10-16-2025_13-57-21',
-    # 'Ab_UAV_10-16-2025_15-11-36',
-    # 'Ab_UAV_10-16-2025_15-16-07',
-    # 'Ab_UAV_10-16-2025_15-25-59',
-    # 'Ab_UAV_10-16-2025_15-29-37'
+    'Ab_UAV_10-16-2025_13-57-21',
+    'Ab_UAV_10-16-2025_15-11-36',
+    'Ab_UAV_10-16-2025_15-16-07',
+    'Ab_UAV_10-16-2025_15-25-59',
+    'Ab_UAV_10-16-2025_15-29-37'
     ]
     for add in adds:
         print(f"Will Process IMDP at address: {add}")
@@ -194,7 +199,7 @@ if __name__ == "__main__":
 
 
 
-    # generate_all_plots(csv_path)
+    generate_all_plots(csv_path)
 
 
     
