@@ -27,6 +27,14 @@ from automata import Automata
 from product import Product
 
 
+address_str = "address"
+val_iter_time_str = "Val_Iter_Execution_time_sec"
+val_iter_converge_iter_str = "Val_Iter_Convergence_iteration"
+qual_time_str = "Qualitative_time_sec"
+transitions_str = 'Transitions'
+Exported_States_PRISM_str = 'Exported States (PRISM)'
+
+
 def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float], alpha=1) -> float:
     base = 0.0
     residual = 1.0
@@ -125,8 +133,8 @@ def value_iteration_scope(P, eps):
         "mean_U_list": mean_U_list,
         "L": L,   
         "U": U,
-        "Convergence_iteration": iterator,
-        "Val_Iter_Execution_time_sec": execution_time
+        val_iter_converge_iter_str: iterator,
+        val_iter_time_str: execution_time
     }
 
 def plot_init_evolution_val_iter(res, add):
