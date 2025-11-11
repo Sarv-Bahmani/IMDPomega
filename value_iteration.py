@@ -35,6 +35,11 @@ transitions_str = 'Transitions'
 Exported_States_PRISM_str = 'Exported States (PRISM)'
 
 
+mean_L_list_str = "mean_L_list"
+mean_U_list_str = "mean_U_list"
+val_iter_value_str = "val_iter_value"
+U_str = "U"
+
 def expectation_for_action(intervals_list: List[Tuple[ProdState, float, float]], V: Dict[ProdState, float], alpha=1) -> float:
     base = 0.0
     residual = 1.0
@@ -129,17 +134,17 @@ def value_iteration_scope(P, eps):
     L, U, iterator, mean_L_list, mean_U_list  = interval_iteration(P, eps=eps)
     execution_time = time.perf_counter() - start_time
     return {
-        "mean_L_list": mean_L_list,
-        "mean_U_list": mean_U_list,
-        "L": L,   
-        "U": U,
+        mean_L_list_str: mean_L_list,
+        mean_U_list_str: mean_U_list,
+        val_iter_value_str: L,   
+        U_str: U,
         val_iter_converge_iter_str: iterator,
         val_iter_time_str: execution_time
     }
 
 def plot_init_evolution_val_iter(res, add):
-    mean_L_list = res["mean_L_list"]
-    mean_U_list = res["mean_U_list"]
+    mean_L_list = res[mean_L_list_str]
+    mean_U_list = res[mean_U_list_str]
 
     x_values = list(range(iter_init_save, (len(mean_L_list)+1) * iter_init_save, iter_init_save))
 
