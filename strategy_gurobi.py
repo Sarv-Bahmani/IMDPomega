@@ -55,8 +55,10 @@ def initialize_env_policy_random(P):
     return env_policy
 
 def solve_player_LP(env_policy, P):
+    print("load model")
     m = gp.Model("player_strategy")
     m.setParam('OutputFlag', 0)
+    print("Gurobi model LOADED")
     
     V = {}
     for x in P.states:
@@ -67,6 +69,7 @@ def solve_player_LP(env_policy, P):
         else:
             V[x] = m.addVar(lb=0.0, ub=1.0, name=f"V_{x}")
     
+    print("will start defining expresions")
     for x in P.states:
         if x in P.target or x in P.losing_sink:
             continue
@@ -79,13 +82,17 @@ def solve_player_LP(env_policy, P):
             m.addConstr(V[x] >= expected_expr, 
                        name=f"constraint_{x}_{action}")
     
+    print("defining expereseions DONE")
+
     m.setObjective(gp.quicksum(V[s] for s in P.states 
                                if s not in P.target and s not in P.losing_sink), 
                    gp.GRB.MINIMIZE)
-    
+    print("will optimize...")
     m.optimize()
     
+    print("optimization DONE")
     V_result = {s: v.X for s, v in V.items()}
+    print("will extract optimal actions...")
     player_strategy = extract_optimal_actions(V_result, env_policy, P)
     
     return V_result, player_strategy
@@ -154,7 +161,9 @@ def converged(V_old, V_new, tol):
 
 
 def strategy_improve(P, eps):
+    print("will start initializing env palicy")
     env_policy = initialize_env_policy_random(P)
+    print("initializing env palicy DONE")
     V = {}
     for state in P.states:
         if   state in P.target     : V[state] = 1.0
