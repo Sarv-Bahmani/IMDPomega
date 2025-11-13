@@ -6,6 +6,12 @@ import random
 from typing import Dict, Set, Tuple, FrozenSet
 import time
 
+from datetime import datetime
+def now_time():
+    time = str(datetime.now().strftime("%H-%M"))
+    return ("time: " + time)
+
+
 address_str = "address"
 val_iter_time_str = "Val_Iter_Execution_time_sec"
 val_iter_converge_iter_str = "Val_Iter_Convergence_iteration"
@@ -55,10 +61,10 @@ def initialize_env_policy_random(P):
     return env_policy
 
 def solve_player_LP(env_policy, P):
-    print("load model")
+    print("load model" + now_time)
     m = gp.Model("player_strategy")
     m.setParam('OutputFlag', 0)
-    print("Gurobi model LOADED")
+    print("Gurobi model LOADED" + now_time)
     
     V = {}
     for x in P.states:
@@ -69,30 +75,36 @@ def solve_player_LP(env_policy, P):
         else:
             V[x] = m.addVar(lb=0.0, ub=1.0, name=f"V_{x}")
     
-    print("will start defining expresions")
+    print("will start defining expresions" + now_time)
     for x in P.states:
         if x in P.target or x in P.losing_sink:
             continue
             
         for action in P.actions.get(x, []):
-            expected_expr = gp.LinExpr()
-            for y, prob in env_policy.get((x, action), {}).items():
-                expected_expr += prob * V[y]
+            # expected_expr = gp.LinExpr()
+            # for y, prob in env_policy.get((x, action), {}).items():
+            #     expected_expr += prob * V[y]
             
-            m.addConstr(V[x] >= expected_expr, 
-                       name=f"constraint_{x}_{action}")
+            # m.addConstr(V[x] >= expected_expr, 
+            #            name=f"constraint_{x}_{action}")
     
-    print("defining expereseions DONE")
+            m.addConstr(
+                V[x] >= sum(
+                    prob * V[y] for y, prob in env_policy.get((x, action), {}).items()
+                )
+                , name=f"constraint_{x}_{action}")
+
+    print("defining expereseions DONE" + now_time)
 
     m.setObjective(gp.quicksum(V[s] for s in P.states 
                                if s not in P.target and s not in P.losing_sink), 
                    gp.GRB.MINIMIZE)
-    print("will optimize...")
+    print("will optimize..." + now_time)
     m.optimize()
     
-    print("optimization DONE")
+    print("optimization DONE" + now_time)
     V_result = {s: v.X for s, v in V.items()}
-    print("will extract optimal actions...")
+    print("will extract optimal actions..." + now_time)
     player_strategy = extract_optimal_actions(V_result, env_policy, P)
     
     return V_result, player_strategy
@@ -161,9 +173,9 @@ def converged(V_old, V_new, tol):
 
 
 def strategy_improve(P, eps):
-    print("will start initializing env palicy")
+    print("will start initializing env palicy" + now_time)
     env_policy = initialize_env_policy_random(P)
-    print("initializing env palicy DONE")
+    print("initializing env palicy DONE" + now_time)
     V = {}
     for state in P.states:
         if   state in P.target     : V[state] = 1.0
@@ -173,16 +185,16 @@ def strategy_improve(P, eps):
     max_iterations = 51
     for iterator in range(max_iterations):
         if iterator % iter_print == 0:
-            print("Iteration:", iterator)
+            print("Iteration:", iterator, now_time)
 
-        print("will go through solving LP...")
+        print("will go through solving LP..." + now_time)
         V_new, player_strategy = solve_player_LP(env_policy, P)
         
-        print("will update env....")
+        print("will update env...." + now_time)
         env_policy = update_environment_policy(V_new, player_strategy, P)
         
         if converged(V, V_new, tol=eps):
-            print("STRATEGY IMPROVEMENT breakkkkkk Converged at iteration", iterator)
+            print("STRATEGY IMPROVEMENT breakkkkkk Converged at iteration", iterator,  + now_time)
             V = V_new
             break
         V = V_new
