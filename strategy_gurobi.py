@@ -83,18 +83,11 @@ def solve_player_LP(env_policy, P):
             continue
             
         for action in P.actions.get(x, []):
-            # expected_expr = gp.LinExpr()
-            # for y, prob in env_policy.get((x, action), {}).items():
-            #     expected_expr += prob * V[y]
-            
-            # m.addConstr(V[x] >= expected_expr, 
-            #            name=f"constraint_{x}_{action}")
-    
             m.addConstr(
                 V[x] >= sum(
                     prob * V[y] for y, prob in env_policy.get((x, action), {}).items()
-                )
-                , name=f"constraint_{x}_{action}")
+                    )
+                    ,name=f"constraint_{x}_{action}")
 
     print("defining expereseions DONE" + now_time())
 
@@ -231,10 +224,6 @@ def strategy_improve_scope(P, eps):
     values, iterator, mean_i_V  = strategy_improve(P, eps=eps)
     execution_time = time.perf_counter() - start_time
     return {
-        # "mean_L_list": mean_L_list,
-        # "mean_U_list": mean_U_list,
-        # "L": L,   
-        # "U": U,
         mean_i_V_str: mean_i_V,
         strat_imprv_Values_str: values,
         strat_imprv_Convergence_iteration_str: iterator,
