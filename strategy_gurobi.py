@@ -5,6 +5,8 @@ from product import Product
 import random
 from typing import Dict, Set, Tuple, FrozenSet
 import time
+import matplotlib.pyplot as plt
+
 
 from datetime import datetime
 def now_time():
@@ -18,7 +20,7 @@ val_iter_converge_iter_str = "Val_Iter_Convergence_iteration"
 qual_time_str = "Qualitative_time_sec"
 transitions_str = 'Transitions'
 Exported_States_PRISM_str = 'Exported States (PRISM)'
-
+mean_i_V_str = "mean_i_V"
 
 strat_imprv_Values_str = "Stratgy_Imprv_Values"
 strat_imprv_Convergence_iteration_str = "Stratgy_Imprv_Convergence_iteration"
@@ -172,6 +174,14 @@ def converged(V_old, V_new, tol):
     return True
 
 
+def calc_init_mean(P, V):
+    mean_i_V = []
+    for (s, q) in P.init_states:
+        mean_i_V.append(V[(s, q)])
+    mean_V = sum(mean_i_V) / len(mean_i_V) if mean_i_V else 0.0
+    return mean_V
+
+
 def strategy_improve(P, eps):
     print("will start initializing env palicy" + now_time)
     env_policy = initialize_env_policy_random(P)
@@ -184,8 +194,9 @@ def strategy_improve(P, eps):
 
     max_iterations = 51
     for iterator in range(max_iterations):
-        if iterator % iter_print == 0:
-            print("Iteration:", iterator, now_time)
+        # if iterator % iter_print == 0:
+        print("Iteration:", iterator, now_time)
+        mean_i_V = calc_init_mean(P, V)
 
         print("will go through solving LP..." + now_time)
         V_new, player_strategy = solve_player_LP(env_policy, P)
@@ -198,18 +209,33 @@ def strategy_improve(P, eps):
             V = V_new
             break
         V = V_new
-    return V, iterator
+    return V, iterator, mean_i_V
+
+
+iter_init_save = 1
+def plot_init_evolution_stra_impr(res, add):
+    mean_V_list = res[mean_i_V_str]
+    x_values = list(range(iter_init_save, (len(mean_V_list)+1) * iter_init_save, iter_init_save))
+    plt.plot(x_values, mean_V_list, marker='o', label='Mean Initial States Value bound')
+    plt.xlabel('Iterations')
+    plt.ylabel('Probability')
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f"Evolution_InitStates_Strategy_Improvement_{add}.png")
+    plt.close()
 
 
 def strategy_improve_scope(P, eps):
     start_time = time.perf_counter()
-    values, iterator  = strategy_improve(P, eps=eps)
+    values, iterator, mean_i_V  = strategy_improve(P, eps=eps)
     execution_time = time.perf_counter() - start_time
     return {
         # "mean_L_list": mean_L_list,
         # "mean_U_list": mean_U_list,
         # "L": L,   
         # "U": U,
+        mean_i_V_str: mean_i_V,
         strat_imprv_Values_str: values,
         strat_imprv_Convergence_iteration_str: iterator,
         strat_imprv_Execution_time_sec_str: execution_time

@@ -9,7 +9,7 @@ from automata import Automata
 from product import Product
 
 from value_iteration import value_iteration_scope, plot_init_evolution_val_iter
-from strategy_gurobi import strategy_improve_scope
+from strategy_gurobi import strategy_improve_scope, plot_init_evolution_stra_impr
 
 noise_samples=20000
 noise_samples_str = "Noise Samples"
@@ -31,6 +31,7 @@ Exported_States_PRISM_str = 'Exported States (PRISM)'
 strat_imprv_Values_str = "Stratgy_Imprv_Values"
 strat_imprv_Convergence_iteration_str = "Stratgy_Imprv_Convergence_iteration"
 strat_imprv_Execution_time_sec_str = "Stratgy_Imprv_Execution_time_sec"
+mean_i_V_str = "mean_i_V"
 
 
 
@@ -206,6 +207,7 @@ if __name__ == "__main__":
 
         print("\t\tWill run strategy improve ...")
         results_strtgy = strategy_improve_scope(P, eps)
+        plot_init_evolution_stra_impr(results_strtgy, add)
         print("\t\tstrategy improve is done.")
 
 
@@ -228,7 +230,7 @@ if __name__ == "__main__":
 
 
 
-    generate_all_plots(csv_path)
+    # generate_all_plots(csv_path)
 
 
     
