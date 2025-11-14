@@ -205,7 +205,7 @@ def strategy_improve(P, eps):
         env_policy = update_environment_policy(V_new, player_strategy, P)
         
         if converged(V, V_new, tol=eps):
-            print("STRATEGY IMPROVEMENT breakkkkkk Converged at iteration", iterator,  + now_time)
+            print("STRATEGY IMPROVEMENT breakkkkkk Converged at iteration", iterator,  + now_time())
             V = V_new
             break
         V = V_new
