@@ -72,7 +72,7 @@ def calc_init_mean(P, L, U):
     mean_U = statistics.mean(mean_i_U) if mean_i_U else 0.0
     return mean_L, mean_U
 
-def interval_iteration(P, eps, max_iter = 51):
+def interval_iteration(P, eps, max_iter = 351):
     L: Dict[ProdState, float] = {x: 0.0 for x in P.states}
     U: Dict[ProdState, float] = {x: 1.0 for x in P.states}
 
