@@ -106,33 +106,31 @@ def generate_all_plots(csv_path):
             record[val_iter_converge_iter_str] = int(row[val_iter_converge_iter_str])
             
             record[strat_imprv_Execution_time_sec_str] = float(row[strat_imprv_Execution_time_sec_str])
-            record[strat_imprv_Convergence_iteration_str] = int(row[strat_imprv_Convergence_iteration_str])
 
             data.append(record)
     
 
     x_var_list = [Choices_str, transitions_str, Exported_States_PRISM_str]
-    y_var_list = [qual_time_str, val_iter_time_str,  val_iter_converge_iter_str, strat_imprv_Execution_time_sec_str, strat_imprv_Convergence_iteration_str]
+    y_var_list = [qual_time_str, val_iter_time_str,  val_iter_converge_iter_str, strat_imprv_Execution_time_sec_str]
     for x_var in x_var_list:
         for y_var in y_var_list:
 
-            plot_x(data, x_var, y_var, 
-                   f"{y_var}_vs_{x_var}", x_var)
+            plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}", x_var)
 
 
 if __name__ == "__main__":
     adds = [
-        "784-0.5-Ab_UAV_10-16-2025_20-48-14",
-        "1024-1-Ab_UAV_11-14-2025_07-27-06",
-        "1225-2-Ab_UAV_11-14-2025_07-25-03",
-        "1296-2-Ab_UAV_11-14-2025_07-33-15",
-        "1600-3-Ab_UAV_10-16-2025_13-57-21",
-        "1800-5-Ab_UAV_10-16-2025_15-11-36",
-        "2025-9-Ab_UAV_11-14-2025_07-35-35",
-        "2160-9-Ab_UAV_10-16-2025_15-16-07",
-        "2304-12-Ab_UAV_11-14-2025_08-04-41",
+        # "784-0.5-Ab_UAV_10-16-2025_20-48-14",
+        # "1024-1-Ab_UAV_11-14-2025_07-27-06",
+        # "1225-2-Ab_UAV_11-14-2025_07-25-03",
+        # "1296-2-Ab_UAV_11-14-2025_07-33-15",
+        # "1600-3-Ab_UAV_10-16-2025_13-57-21",
+        # "1800-5-Ab_UAV_10-16-2025_15-11-36",
+        # "2025-9-Ab_UAV_11-14-2025_07-35-35",
+        # "2160-9-Ab_UAV_10-16-2025_15-16-07",
+        # "2304-12-Ab_UAV_11-14-2025_08-04-41",
         "2430-15-Ab_UAV_10-16-2025_15-25-59",
-        "2916-25-Ab_UAV_10-16-2025_15-29-37"
+        # "2916-25-Ab_UAV_10-16-2025_15-29-37"
         ]
     
     for add in adds:
@@ -175,10 +173,6 @@ if __name__ == "__main__":
         results = {}
         eps = 1e-9
 
-        print("\t\tWill run strategy improve ...")
-        results_strtgy = strategy_improve_scope(P, eps)
-        plot_init_evolution_stra_impr(results_strtgy, add[:7])
-        print("\t\tstrategy improve is done.")
 
 
         print("\t\tWill run value iteration...")
@@ -187,16 +181,23 @@ if __name__ == "__main__":
         print("\t\tValue iteration is done.")
 
 
+        print("\t\tWill run strategy improve ...")
+        results_strtgy = strategy_improve_scope(P, eps)
+        plot_init_evolution_stra_impr(results_strtgy, add[:7])
+        print("\t\tstrategy improve is done.")
+
         results.update({qual_time_str: P.qualitative_time_sec})
         results.update(results_val_iter)
         results.update(results_strtgy)
+
+        pd.DataFrame.from_dict(results, orient="index").to_csv(f"results_{add[:7]}.csv")
+
 
         print(f"\tUpdating results to CSV...")
         update_csv_reslt(csv_path, add, results)
         print(f"\tCSV is updated.")
 
 
-        pd.DataFrame.from_dict(results, orient="index").to_csv(f"results_{add[:7]}.csv")
 
 
 
