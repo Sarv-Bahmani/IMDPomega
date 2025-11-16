@@ -20,7 +20,7 @@ val_iter_converge_iter_str = "Val_Iter_Convergence_iteration"
 qual_time_str = "Qualitative_time_sec"
 transitions_str = 'Transitions'
 Exported_States_PRISM_str = 'Exported States (PRISM)'
-mean_i_V_str = "mean_i_V"
+mean_V_list_str = "mean_V_list"
 
 strat_imprv_Values_str = "Stratgy_Imprv_Values"
 strat_imprv_Convergence_iteration_str = "Stratgy_Imprv_Convergence_iteration"
@@ -186,10 +186,12 @@ def strategy_improve(P, eps):
         else                       : V[state] = 0.5 #????????????????????????? 
 
     max_iterations = 51
+    mean_V_list = []
     for iterator in range(max_iterations):
         # if iterator % iter_print == 0:
         print("Iteration:", iterator, now_time)
         mean_i_V = calc_init_mean(P, V)
+        mean_V_list.append(mean_i_V)
 
         print("will go through solving LP..." + now_time())
         V_new, player_strategy = solve_player_LP(env_policy, P)
@@ -198,16 +200,16 @@ def strategy_improve(P, eps):
         env_policy = update_environment_policy(V_new, player_strategy, P)
         
         if converged(V, V_new, tol=eps):
-            print("STRATEGY IMPROVEMENT breakkkkkk Converged at iteration", iterator,  + now_time())
+            print(f"STRATEGY IMPROVEMENT breakkkkkk Converged at iteration: {iterator}, {now_time()}")
             V = V_new
             break
         V = V_new
-    return V, iterator, mean_i_V
+    return V, iterator, mean_V_list
 
 
 iter_init_save = 1
 def plot_init_evolution_stra_impr(res, add):
-    mean_V_list = res[mean_i_V_str]
+    mean_V_list = res[mean_V_list_str]
     x_values = list(range(iter_init_save, (len(mean_V_list)+1) * iter_init_save, iter_init_save))
     plt.plot(x_values, mean_V_list, marker='o', label='Mean Initial States Value bound')
     plt.xlabel('Iterations')
@@ -221,10 +223,10 @@ def plot_init_evolution_stra_impr(res, add):
 
 def strategy_improve_scope(P, eps):
     start_time = time.perf_counter()
-    values, iterator, mean_i_V  = strategy_improve(P, eps=eps)
+    values, iterator, mean_V_list  = strategy_improve(P, eps=eps)
     execution_time = time.perf_counter() - start_time
     return {
-        mean_i_V_str: mean_i_V,
+        mean_V_list_str: mean_V_list,
         strat_imprv_Values_str: values,
         strat_imprv_Convergence_iteration_str: iterator,
         strat_imprv_Execution_time_sec_str: execution_time
