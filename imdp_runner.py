@@ -232,7 +232,7 @@ if __name__ == "__main__":
         print(f"\tCSV is updated.")
 
 
-        pd.DataFrame.from_dict(results, orient="index").to_csv(f"results{add}.csv")
+        pd.DataFrame.from_dict(results, orient="index").to_csv(f"results_{add[:7]}.csv")
 
 
 
