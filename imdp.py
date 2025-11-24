@@ -12,7 +12,6 @@ lab = "Abstraction_interval.lab"
 tra = "Abstraction_interval.tra"
 
 csv_path = Path("gen_imdp_info/IMDPs_info.csv")
-root_models = Path("data/raw/MDPs")
 
 State = int
 QState = int
@@ -22,16 +21,18 @@ Label = FrozenSet[str]
 
 
 class IMDP:
-    def __init__(self, address, noise_samples):
+    def __init__(self, model_type, address, noise_samples):
         self.states: Set[State] = set()
         self.actions: Dict[State, Set[Action]] = defaultdict(set)
         self.intervals: Dict[Tuple[State, Action], Dict[State, Tuple[float, float]]] = {}
         self.label: Dict[State, Label] = {}
         self.address = address
         self.noise_samples = noise_samples
+        
+        root_models = Path(f"data/raw/{model_type}")
         self.base = root_models / address / f"N={noise_samples}_0"
-        self.imdp_from_files_quant()
     
+        self.imdp_from_files_quant()
 
 
     def load_sta_align(self, path_sta: str):

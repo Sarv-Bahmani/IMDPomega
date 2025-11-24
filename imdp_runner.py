@@ -14,7 +14,6 @@ from strategy_gurobi import strategy_improve_scope, plot_init_evolution_stra_imp
 
 noise_samples=20000
 noise_samples_str = "Noise Samples"
-csv_path = Path("gen_imdp_info/IMDPs_info.csv")
 root_models = Path("MDPs")
 
 
@@ -149,22 +148,29 @@ def generate_all_plots(csv_path):
 
 if __name__ == "__main__":
     adds = [
+        "Ab_shuttle_11-24-2025_17-17-12",
+        # "Ab_shuttle_11-24-2025_17-22-47",
+        # "Ab_shuttle_11-24-2025_17-26-19",
+        # "Ab_shuttle_11-24-2025_17-32-05",
+
         # "784-0.5-Ab_UAV_10-16-2025_20-48-14",
         # "1024-1-Ab_UAV_11-14-2025_07-27-06",
         # "1225-2-Ab_UAV_11-14-2025_07-25-03",
         # "1296-2-Ab_UAV_11-14-2025_07-33-15",
         # "1600-3-Ab_UAV_10-16-2025_13-57-21",
         # "1800-5-Ab_UAV_10-16-2025_15-11-36",
-        "2025-9-Ab_UAV_11-14-2025_07-35-35",
+        # "2025-9-Ab_UAV_11-14-2025_07-35-35",
         # "2160-9-Ab_UAV_10-16-2025_15-16-07",
         # "2304-12-Ab_UAV_11-14-2025_08-04-41",
         # "2430-15-Ab_UAV_10-16-2025_15-25-59",
         # "2916-25-Ab_UAV_10-16-2025_15-29-37"
         ]
     
+    model_type = "shuttle"
+    # model_type = "uav"
     for add in adds:
         print(f"Will Process IMDP at address: {add}")
-        I = IMDP(address=add, noise_samples=noise_samples)
+        I = IMDP(model_type=model_type, address=add, noise_samples=noise_samples)
         print("\tIMDP is loaded.")
         all_labsets = {I.label[s] for s in I.states}
         B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=True)
@@ -175,26 +181,29 @@ if __name__ == "__main__":
 
 
 
-        # print("Number of product states:", len(P.states))
-        # common_init_target = P.init_states & P.target
-        # common_init_losing = P.init_states & P.losing_sink
-        # common_init_losing_or_ddlck = len({
-        # x for x in P.init_states 
-        # if P.imdp.label.get(x[0], frozenset()) & frozenset({"failed", "deadlock"})})
-        # # common_target_losing = P.target & P.losing_sink
+        # print(len(P.trans_prod if P.trans_prod[l]==0.0001))
 
-        # print("Init ∩ Target:", len(common_init_target))
-        # print("Init ∩ Losing:", len(common_init_losing))
-        # print("Init ∩ (Losing ∪ Deadlock):", common_init_losing_or_ddlck)
-        # # print("Target ∩ Losing:", len(common_target_losing))
-        # print("target states:", len(P.target))
-        # print("losing states:", len(P.losing_sink))
 
-        # only_init = P.init_states - (P.target | P.losing_sink)
-        # print("only init:", len(only_init))
+        print("Number of product states:", len(P.states))
+        common_init_target = P.init_states & P.target
+        common_init_losing = P.init_states & P.losing_sink
+        common_init_losing_or_ddlck = len({
+        x for x in P.init_states 
+        if P.imdp.label.get(x[0], frozenset()) & frozenset({"failed", "deadlock"})})
+        # common_target_losing = P.target & P.losing_sink
 
-        # all_inits = len(P.init_states)
-        # print("all inits:", all_inits)
+        print("Init ∩ Target:", len(common_init_target))
+        print("Init ∩ Losing:", len(common_init_losing))
+        print("Init ∩ (Losing ∪ Deadlock):", common_init_losing_or_ddlck)
+        # print("Target ∩ Losing:", len(common_target_losing))
+        print("target states:", len(P.target))
+        print("losing states:", len(P.losing_sink))
+
+        only_init = P.init_states - (P.target | P.losing_sink)
+        print("only init:", len(only_init))
+
+        all_inits = len(P.init_states)
+        print("all inits:", all_inits)
 
 
 
@@ -223,6 +232,8 @@ if __name__ == "__main__":
 
 
         print(f"\tUpdating results to CSV...")
+        csv_path = Path(f"gen_imdp_info/IMDPs_info_{model_type}.csv")
+
         update_csv_reslt(csv_path, add, results)
         print(f"\tCSV is updated.")
 
