@@ -152,10 +152,10 @@ if __name__ == "__main__":
     # model_type = uav_str
     adds = {}
     adds[shuttle_str] = [
-        "Ab_shuttle_11-24-2025_17-17-12",
-        "Ab_shuttle_11-24-2025_17-22-47",
-        "Ab_shuttle_11-24-2025_17-26-19",
-        "Ab_shuttle_11-24-2025_17-32-05",
+        "3200_Ab_shuttle_11-24-2025_17-17-12",
+        "5000_Ab_shuttle_11-24-2025_17-22-47",
+        "7200_Ab_shuttle_11-24-2025_17-26-19",
+        "9800_Ab_shuttle_11-24-2025_17-32-05",
         ]
 
     adds[uav_str] = [
@@ -240,20 +240,20 @@ if __name__ == "__main__":
 
         print("\t\tWill run value iteration...")
         results_val_iter = value_iteration_scope(P, eps)
-        plot_init_evolution_val_iter(results_val_iter, add[:7])
+        plot_init_evolution_val_iter(results_val_iter, add[:14])
         print("\t\tValue iteration is done.")
 
 
         print("\t\tWill run strategy improve ...")
         results_strtgy = strategy_improve_scope(P, eps)
-        plot_init_evolution_stra_impr(results_strtgy, add[:7])
+        plot_init_evolution_stra_impr(results_strtgy, add[:14])
         print("\t\tstrategy improve is done.")
 
         results.update({qual_time_str: P.qualitative_time_sec})
         results.update(results_val_iter)
         results.update(results_strtgy)
 
-        pd.DataFrame.from_dict(results, orient="index").to_csv(f"results_{add[:7]}.csv")
+        pd.DataFrame.from_dict(results, orient="index").to_csv(f"results_{add[:14]}.csv")
 
 
         print(f"\tUpdating results to CSV...")
