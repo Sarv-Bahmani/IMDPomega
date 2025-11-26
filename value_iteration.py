@@ -1,9 +1,10 @@
 import statistics
-import matplotlib.pyplot as plt
 import time
 from typing import Dict, Tuple, FrozenSet, List
-from pathlib import Path
+import matplotlib.pyplot as plt
+import pandas as pd
 
+from pathlib import Path
 import sys
 sys.setrecursionlimit(200000)
 
@@ -19,8 +20,8 @@ Label = FrozenSet[str]
 
 
 iter_init_save = 1
-iter_print = 5
-up_contrac_fctr = 0.999
+iter_print = 1
+up_contrac_fctr = 0.99
 
 from imdp import IMDP
 from automata import Automata
@@ -81,14 +82,23 @@ def interval_iteration(P, eps, max_iter = 351):
 
     mean_L_list, mean_U_list = [], []
 
+    states_vals = []
+    iters = [] 
+    list_states = list(P.states)
+    
     for iterator in range(max_iter):
-
-        if iterator % iter_init_save == 0 and iterator > 1:            
-            if iterator % iter_print == 0:
-                print("Iteration:", iterator)
+        if iterator % iter_init_save == 0:# and iterator > 1:            
             mean_L, mean_U = calc_init_mean(P, L, U)
             mean_L_list.append(mean_L)
             mean_U_list.append(mean_U)
+
+        if iterator % iter_print == 0:
+            print("Iteration:", iterator)
+            states_vals.append([L[s] for s in list_states])
+            iters.append(iterator)
+            df = pd.DataFrame(data=states_vals, index=iters, columns=list_states)
+            df.index.name = "iteration"
+            df.to_csv("VI_l_vals.csv")
 
         deltaL = 0.0
         deltaU = 0.0

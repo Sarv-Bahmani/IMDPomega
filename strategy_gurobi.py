@@ -6,7 +6,7 @@ import random
 from typing import Dict, Set, Tuple, FrozenSet
 import time
 import matplotlib.pyplot as plt
-
+import pandas as pd
 
 from datetime import datetime
 def now_time():
@@ -183,12 +183,22 @@ def strategy_improve(P, eps):
     for state in P.states:
         if   state in P.target     : V[state] = 1.0
         elif state in P.losing_sink: V[state] = 0.0
-        else                       : V[state] = 0.5 #????????????????????????? 
+        else                       : V[state] = 0.5
 
     max_iterations = 51
     mean_V_list = []
+
+    states_vals = []
+    iters = [] 
+    list_states = list(P.states)
     for iterator in range(max_iterations):
-        # if iterator % iter_print == 0:
+        if iterator % iter_print == 0:
+            states_vals.append([V[s] for s in list_states])
+            iters.append(iterator)
+            df = pd.DataFrame(data=states_vals, index=iters, columns=list_states)
+            df.index.name = "iteration"
+            df.to_csv("SI_l_vals.csv")
+        
         print("Iteration:", iterator, now_time)
         mean_i_V = calc_init_mean(P, V)
         mean_V_list.append(mean_i_V)
