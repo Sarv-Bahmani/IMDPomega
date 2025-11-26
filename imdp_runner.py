@@ -16,7 +16,8 @@ noise_samples=20000
 noise_samples_str = "Noise Samples"
 root_models = Path("MDPs")
 
-
+shuttle_str = "shuttle"
+uav_str = "uav"
 
 
 
@@ -147,13 +148,18 @@ def generate_all_plots(csv_path):
 
 
 if __name__ == "__main__":
-    adds = [
+    model_type = shuttle_str
+    # model_type = uav_str
+    adds = {}
+    adds[shuttle_str] = [
         "Ab_shuttle_11-24-2025_17-17-12",
-        # "Ab_shuttle_11-24-2025_17-22-47",
-        # "Ab_shuttle_11-24-2025_17-26-19",
-        # "Ab_shuttle_11-24-2025_17-32-05",
+        "Ab_shuttle_11-24-2025_17-22-47",
+        "Ab_shuttle_11-24-2025_17-26-19",
+        "Ab_shuttle_11-24-2025_17-32-05",
+        ]
 
-        # "784-0.5-Ab_UAV_10-16-2025_20-48-14",
+    adds[uav_str] = [
+        "784-0.5-Ab_UAV_10-16-2025_20-48-14",
         # "1024-1-Ab_UAV_11-14-2025_07-27-06",
         # "1225-2-Ab_UAV_11-14-2025_07-25-03",
         # "1296-2-Ab_UAV_11-14-2025_07-33-15",
@@ -166,9 +172,8 @@ if __name__ == "__main__":
         # "2916-25-Ab_UAV_10-16-2025_15-29-37"
         ]
     
-    model_type = "shuttle"
-    # model_type = "uav"
-    for add in adds:
+
+    for add in adds[model_type]:
         print(f"Will Process IMDP at address: {add}")
         I = IMDP(model_type=model_type, address=add, noise_samples=noise_samples)
         print("\tIMDP is loaded.")
@@ -180,37 +185,57 @@ if __name__ == "__main__":
 
 
 
+        # smlst_interval = 2
+        # for st_prob in P.trans_prod.values():
+        #     for intervals in st_prob.values():
+        #         if intervals[0] == 0.0001:
+        #             if intervals[1] - intervals[0] < smlst_interval:
+        #                 smlst_interval = intervals[1] - intervals[0]
 
-        # print(len(P.trans_prod if P.trans_prod[l]==0.0001))
+        # print(smlst_interval)
+        # total_intervals = 0
+        # count_lower_0001 = 0
+
+        # for st_prob in P.trans_prod.values():
+        #     for intervals in st_prob.values():
+        #         total_intervals += 1
+        #         if intervals[0] == 0.0001:
+        #             count_lower_0001 += 1
+
+        # percentage = count_lower_0001 / total_intervals if total_intervals > 0 else 0
+
+        # print("Total intervals:", total_intervals)
+        # print("Intervals with lower=0.0001:", count_lower_0001)
+        # print("Percentage:", percentage)
 
 
-        print("Number of product states:", len(P.states))
-        common_init_target = P.init_states & P.target
-        common_init_losing = P.init_states & P.losing_sink
-        common_init_losing_or_ddlck = len({
-        x for x in P.init_states 
-        if P.imdp.label.get(x[0], frozenset()) & frozenset({"failed", "deadlock"})})
-        # common_target_losing = P.target & P.losing_sink
 
-        print("Init ∩ Target:", len(common_init_target))
-        print("Init ∩ Losing:", len(common_init_losing))
-        print("Init ∩ (Losing ∪ Deadlock):", common_init_losing_or_ddlck)
-        # print("Target ∩ Losing:", len(common_target_losing))
-        print("target states:", len(P.target))
-        print("losing states:", len(P.losing_sink))
+        # print("Number of product states:", len(P.states))
+        # common_init_target = P.init_states & P.target
+        # common_init_losing = P.init_states & P.losing_sink
+        # common_init_losing_or_ddlck = len({
+        # x for x in P.init_states 
+        # if P.imdp.label.get(x[0], frozenset()) & frozenset({"failed", "deadlock"})})
+        # # common_target_losing = P.target & P.losing_sink
 
-        only_init = P.init_states - (P.target | P.losing_sink)
-        print("only init:", len(only_init))
+        # print("Init ∩ Target:", len(common_init_target))
+        # print("Init ∩ Losing:", len(common_init_losing))
+        # print("Init ∩ (Losing ∪ Deadlock):", common_init_losing_or_ddlck)
+        # # print("Target ∩ Losing:", len(common_target_losing))
+        # print("target states:", len(P.target))
+        # print("losing states:", len(P.losing_sink))
 
-        all_inits = len(P.init_states)
-        print("all inits:", all_inits)
+        # only_init = P.init_states - (P.target | P.losing_sink)
+        # print("only init:", len(only_init))
+
+        # all_inits = len(P.init_states)
+        # print("all inits:", all_inits)
 
 
 
 
         results = {}
-        eps = 1e-9
-
+        eps = 1e-5
 
 
         print("\t\tWill run value iteration...")
