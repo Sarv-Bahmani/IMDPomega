@@ -1,3 +1,4 @@
+import sys
 import csv
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -139,8 +140,16 @@ def generate_all_plots(csv_path):
 
 
 if __name__ == "__main__":
-    model_type = shuttle_str
+
+    if len(sys.argv) < 2:
+            print("Usage: python imdp_runner.py <Model Type>")
+            sys.exit(1)
+
+    model_type = sys.argv[1]
+    # model_type = shuttle_str
     # model_type = uav_str
+
+
     adds = {}
     adds[shuttle_str] = [
         "3200_1_Ab_shuttle_11-24-2025_17-17-12",
