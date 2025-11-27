@@ -147,26 +147,24 @@ if __name__ == "__main__":
             sys.exit(1)
 
     model_type = sys.argv[1]
-    # model_type = shuttle_str
-    # model_type = uav_str
 
 
     adds = {}
     adds[shuttle_str] = [
         "3200_1_Ab_shuttle_11-24-2025_17-17-12",
         "5000_2_Ab_shuttle_11-24-2025_17-22-47",
-        "7200_6_Ab_shuttle_11-24-2025_17-26-19",
+        # "7200_6_Ab_shuttle_11-24-2025_17-26-19",
         ]
 
     adds[uav_str] = [
         "784-0.5-Ab_UAV_10-16-2025_20-48-14",
         "1024-1-Ab_UAV_11-14-2025_07-27-06",
         "1296-2-Ab_UAV_11-14-2025_07-33-15",
-        "1600-3-Ab_UAV_10-16-2025_13-57-21",
-        "1800-5-Ab_UAV_10-16-2025_15-11-36",
-        "2160-9-Ab_UAV_10-16-2025_15-16-07",
-        "2304-12-Ab_UAV_11-14-2025_08-04-41",
-        "2430-15-Ab_UAV_10-16-2025_15-25-59",
+        # "1600-3-Ab_UAV_10-16-2025_13-57-21",
+        # "1800-5-Ab_UAV_10-16-2025_15-11-36",
+        # "2160-9-Ab_UAV_10-16-2025_15-16-07",
+        # "2304-12-Ab_UAV_11-14-2025_08-04-41",
+        # "2430-15-Ab_UAV_10-16-2025_15-25-59",
         ]
     
 
@@ -181,16 +179,16 @@ if __name__ == "__main__":
         print("\tProduct is built.")
 
         results = {}
-        eps = 1e-5
 
         print("\t\tWill run value iteration...")
-        results_val_iter = value_iteration_scope(P, eps)
+        up_contrac_fctr = 0.999 if model_type == uav_str else 0.99
+        results_val_iter = value_iteration_scope(P, up_contrac_fctr)
         plot_init_evolution_val_iter(results_val_iter, add[:14])
         print("\t\tValue iteration is done.")
 
 
         print("\t\tWill run strategy improve ...")
-        results_strtgy = strategy_improve_scope(P, eps)
+        results_strtgy = strategy_improve_scope(P)
         plot_init_evolution_stra_impr(results_strtgy, add[:14])
         print("\t\tstrategy improve is done.")
 
