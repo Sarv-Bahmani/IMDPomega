@@ -20,7 +20,6 @@ shuttle_str = "shuttle"
 uav_str = "uav"
 
 
-
 address_str = "address"
 val_iter_time_str = "Val_Iter_Execution_time_sec"
 val_iter_converge_iter_str = "Val_Iter_Convergence_iteration"
@@ -95,12 +94,10 @@ def plot_ratio_scatter(data):
     ratios = [rec['ratio_SI_VI'] for rec in data]
 
     plt.figure(figsize=(len(models)/2,3))
-    # plt.bar(models, ratios)
     x = np.arange(len(models)) 
     plt.bar(x, ratios) 
     plt.axhline(1.0, linestyle='--', linewidth=1)
     plt.ylabel('SI_time / VI_time')
-    # plt.xticks(rotation=0, ha='right', fontsize=8)
     plt.xticks(x, models, rotation=45, ha='right', fontsize=8)
     plt.title('Relative Cost: Strategy Improvement vs Value Iteration')
     plt.tight_layout()
@@ -119,17 +116,12 @@ def generate_all_plots(csv_path):
             record = {}
             record[transitions_str] = int(row[transitions_str])
             record[Exported_States_PRISM_str] = int(row[Exported_States_PRISM_str])
-            # record[Choices_str] = int(row[Choices_str])
-
             record[qual_time_str] = float(row[qual_time_str])
-            
             record[val_iter_time_str] = float(row[val_iter_time_str])
             record[val_iter_converge_iter_str] = int(row[val_iter_converge_iter_str])
             
             record[strat_imprv_Execution_time_sec_str] = float(row[strat_imprv_Execution_time_sec_str])
-
             record[ratio_str] = float(record[strat_imprv_Execution_time_sec_str] / record[val_iter_time_str])
-
             record['model'] = row[address_str][:4]
 
             data.append(record)
@@ -143,7 +135,6 @@ def generate_all_plots(csv_path):
     y_var_list = [qual_time_str, val_iter_time_str,  val_iter_converge_iter_str, strat_imprv_Execution_time_sec_str, ratio_str]
     for x_var in x_var_list:
         for y_var in y_var_list:
-
             plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}", x_var)
 
 
@@ -152,24 +143,24 @@ if __name__ == "__main__":
     # model_type = uav_str
     adds = {}
     adds[shuttle_str] = [
-        "3200_Ab_shuttle_11-24-2025_17-17-12",
-        "5000_Ab_shuttle_11-24-2025_17-22-47",
-        "7200_Ab_shuttle_11-24-2025_17-26-19",
-        "9800_Ab_shuttle_11-24-2025_17-32-05",
+        "3200_1_Ab_shuttle_11-24-2025_17-17-12",
+        "5000_2_Ab_shuttle_11-24-2025_17-22-47",
+        "7200_6_Ab_shuttle_11-24-2025_17-26-19",
+        # "9800_13_Ab_shuttle_11-24-2025_17-32-05",
         ]
 
     adds[uav_str] = [
         "784-0.5-Ab_UAV_10-16-2025_20-48-14",
-        # "1024-1-Ab_UAV_11-14-2025_07-27-06",
-        # "1225-2-Ab_UAV_11-14-2025_07-25-03",
-        # "1296-2-Ab_UAV_11-14-2025_07-33-15",
-        # "1600-3-Ab_UAV_10-16-2025_13-57-21",
-        # "1800-5-Ab_UAV_10-16-2025_15-11-36",
-        # "2025-9-Ab_UAV_11-14-2025_07-35-35",
-        # "2160-9-Ab_UAV_10-16-2025_15-16-07",
-        # "2304-12-Ab_UAV_11-14-2025_08-04-41",
-        # "2430-15-Ab_UAV_10-16-2025_15-25-59",
-        # "2916-25-Ab_UAV_10-16-2025_15-29-37"
+        "1024-1-Ab_UAV_11-14-2025_07-27-06",
+        "1225-2-Ab_UAV_11-14-2025_07-25-03",
+        "1296-2-Ab_UAV_11-14-2025_07-33-15",
+        "1600-3-Ab_UAV_10-16-2025_13-57-21",
+        "1800-5-Ab_UAV_10-16-2025_15-11-36",
+        "2025-9-Ab_UAV_11-14-2025_07-35-35",
+        "2160-9-Ab_UAV_10-16-2025_15-16-07",
+        "2304-12-Ab_UAV_11-14-2025_08-04-41",
+        "2430-15-Ab_UAV_10-16-2025_15-25-59",
+        "2916-25-Ab_UAV_10-16-2025_15-29-37"
         ]
     
 
@@ -183,60 +174,8 @@ if __name__ == "__main__":
         P = Product(I, B)
         print("\tProduct is built.")
 
-
-
-        # smlst_interval = 2
-        # for st_prob in P.trans_prod.values():
-        #     for intervals in st_prob.values():
-        #         if intervals[0] == 0.0001:
-        #             if intervals[1] - intervals[0] < smlst_interval:
-        #                 smlst_interval = intervals[1] - intervals[0]
-
-        # print(smlst_interval)
-        # total_intervals = 0
-        # count_lower_0001 = 0
-
-        # for st_prob in P.trans_prod.values():
-        #     for intervals in st_prob.values():
-        #         total_intervals += 1
-        #         if intervals[0] == 0.0001:
-        #             count_lower_0001 += 1
-
-        # percentage = count_lower_0001 / total_intervals if total_intervals > 0 else 0
-
-        # print("Total intervals:", total_intervals)
-        # print("Intervals with lower=0.0001:", count_lower_0001)
-        # print("Percentage:", percentage)
-
-
-
-        # print("Number of product states:", len(P.states))
-        # common_init_target = P.init_states & P.target
-        # common_init_losing = P.init_states & P.losing_sink
-        # common_init_losing_or_ddlck = len({
-        # x for x in P.init_states 
-        # if P.imdp.label.get(x[0], frozenset()) & frozenset({"failed", "deadlock"})})
-        # # common_target_losing = P.target & P.losing_sink
-
-        # print("Init ∩ Target:", len(common_init_target))
-        # print("Init ∩ Losing:", len(common_init_losing))
-        # print("Init ∩ (Losing ∪ Deadlock):", common_init_losing_or_ddlck)
-        # # print("Target ∩ Losing:", len(common_target_losing))
-        # print("target states:", len(P.target))
-        # print("losing states:", len(P.losing_sink))
-
-        # only_init = P.init_states - (P.target | P.losing_sink)
-        # print("only init:", len(only_init))
-
-        # all_inits = len(P.init_states)
-        # print("all inits:", all_inits)
-
-
-
-
         results = {}
         eps = 1e-5
-
 
         print("\t\tWill run value iteration...")
         results_val_iter = value_iteration_scope(P, eps)
@@ -255,15 +194,11 @@ if __name__ == "__main__":
 
         pd.DataFrame.from_dict(results, orient="index").to_csv(f"results_{add[:14]}.csv")
 
-
         print(f"\tUpdating results to CSV...")
         csv_path = Path(f"gen_imdp_info/IMDPs_info_{model_type}.csv")
 
         update_csv_reslt(csv_path, add, results)
         print(f"\tCSV is updated.")
-
-
-
 
 
     generate_all_plots(csv_path)
