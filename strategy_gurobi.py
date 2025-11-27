@@ -63,10 +63,8 @@ def initialize_env_policy_random(P):
     return env_policy
 
 def solve_player_LP(env_policy, P):
-    print("load model" + now_time())
     m = gp.Model("player_strategy")
     m.setParam('OutputFlag', 0)
-    print("Gurobi model LOADED" + now_time())
     
     V = {}
     for x in P.states:
@@ -77,7 +75,6 @@ def solve_player_LP(env_policy, P):
         else:
             V[x] = m.addVar(lb=0.0, ub=1.0, name=f"V_{x}")
     
-    print("will start defining expresions" + now_time())
     for x in P.states:
         if x in P.target or x in P.losing_sink:
             continue
@@ -89,17 +86,13 @@ def solve_player_LP(env_policy, P):
                     )
                     ,name=f"constraint_{x}_{action}")
 
-    print("defining expereseions DONE" + now_time())
 
     m.setObjective(gp.quicksum(V[s] for s in P.states 
                                if s not in P.target and s not in P.losing_sink), 
                    gp.GRB.MINIMIZE)
-    print("will optimize..." + now_time())
     m.optimize()
     
-    print("optimization DONE" + now_time())
     V_result = {s: v.X for s, v in V.items()}
-    print("will extract optimal actions..." + now_time())
     player_strategy = extract_optimal_actions(V_result, env_policy, P)
     
     return V_result, player_strategy
@@ -134,7 +127,6 @@ def update_environment_policy(V, player_strategy, P):
             continue
         
         actions = P.actions.get(state, ())
-        # action = player_strategy[state] # **********************************
         for action in actions:
             intervals = P.trans_prod.get((state, action), {})
             
@@ -176,9 +168,7 @@ def calc_init_mean(P, V):
 
 
 def strategy_improve(P, eps):
-    print("will start initializing env palicy" + now_time())
     env_policy = initialize_env_policy_random(P)
-    print("initializing env palicy DONE" + now_time())
     V = {}
     for state in P.states:
         if   state in P.target     : V[state] = 1.0
@@ -188,29 +178,13 @@ def strategy_improve(P, eps):
     max_iterations = 51
     mean_V_list = []
 
-    states_vals = []
-    iters = [] 
-    list_states = list(P.states)
+
     for iterator in range(max_iterations):
-        if iterator % iter_print == 0:
-            states_vals.append([V[s] for s in list_states])
-            iters.append(iterator)
-            df = pd.DataFrame(data=states_vals, index=iters, columns=list_states)
-            df.index.name = "iteration"
-            df.to_csv("SI_l_vals.csv")
-        
-        print("Iteration:", iterator, now_time)
         mean_i_V = calc_init_mean(P, V)
         mean_V_list.append(mean_i_V)
-
-        print("will go through solving LP..." + now_time())
         V_new, player_strategy = solve_player_LP(env_policy, P)
-        
-        print("will update env...." + now_time())
         env_policy = update_environment_policy(V_new, player_strategy, P)
-        
         if converged(V, V_new, tol=eps):
-            print(f"STRATEGY IMPROVEMENT breakkkkkk Converged at iteration: {iterator}, {now_time()}")
             V = V_new
             break
         V = V_new
