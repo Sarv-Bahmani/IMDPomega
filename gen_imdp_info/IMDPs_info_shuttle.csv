@@ -1,4 +1,5 @@
 address,Model File,Model Name,timebound,Monte Carlo Iter,x_init,Noise Samples,Confidence,Sample Clustering,drone_mc_step,drone_mc_iter,bld_partition,bld_target_size,drug_partition,UAV_dim,Regions (base),Exported States (PRISM),Choices,Transitions,Partition,Enabled (total),Enabled (init),Deadlocks,PRISM Ver,Property,PRISM Iter,Range (init states),Final Result,DefAct (s),ProbCalc (s),Export (s),Build (s),Check (s),Total (s),MC Init,MC Summary,Python Ver,OS,Conda Env,Stratgy_Imprv_Execution_time_sec,Stratgy_Imprv_Convergence_iteration,Val_Iter_Execution_time_sec,Val_Iter_Convergence_iteration,Qualitative_time_sec
-3200_Ab_shuttle_11-24-2025_17-17-12,,,,,,20000,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,133.50235650000002,2,41.353142,5,6.971399599999984
-5000_Ab_shuttle_11-24-2025_17-22-47,,,,,,20000,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,504.84082839999996,2,106.064739,5,18.084115200000042
-7200_Ab_shuttle_11-24-2025_17-26-19,,,,,,20000,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,2421.5061911,2,345.239216,5,74.8992459000001
+3200_1_Ab_shuttle_11-24-2025_17-17-12,,,,,,20000,,,,,,,,,,3200,,963734,,,,,,,,,,,,,,,,,,,,,133.50235650000002,2,41.353142,5,6.971399599999984
+5000_2_Ab_shuttle_11-24-2025_17-22-47,,,,,,20000,,,,,,,,,,5000,,2777006,,,,,,,,,,,,,,,,,,,,,504.84082839999996,2,106.064739,5,18.084115200000042
+7200_6_Ab_shuttle_11-24-2025_17-26-19,,,,,,20000,,,,,,,,,,7200,,6417057,,,,,,,,,,,,,,,,,,,,,2421.5061911,2,345.239216,5,74.8992459000001
+9800_13_Ab_shuttle_11-24-2025_17-32-05,,,,,,20000,,,,,,,,,,9800,,13529300,,,,,,,,,,,,,,,,,,,,,3295.2638231,2,469.233659,5,101.4869271
