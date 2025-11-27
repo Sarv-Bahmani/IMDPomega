@@ -4,6 +4,7 @@ from typing import Dict, Tuple, FrozenSet, List
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import os
 from pathlib import Path
 import sys
 sys.setrecursionlimit(200000)
@@ -167,6 +168,7 @@ def plot_init_evolution_val_iter(res, add):
     plt.legend()
     plt.tight_layout()
     plt.savefig(f"Evolution_InitSt_VI_{add}.png")
+    plt.savefig(os.path.join("results", "initial_states", f"Evolution_InitSt_VI_{add}.png"))
     plt.close()
 
 

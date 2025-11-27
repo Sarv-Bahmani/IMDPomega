@@ -1,5 +1,6 @@
 import sys
 import csv
+import os
 from pathlib import Path
 import matplotlib.pyplot as plt
 
@@ -85,7 +86,7 @@ def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
     plt.xlabel(x_lab)
     plt.ylabel(y_var)
     plt.grid(True)
-    plt.savefig(f"{pic_name}.png")
+    plt.savefig(os.path.join("results", "plots", f"{pic_name}.png"))
     plt.close()
 
 
@@ -102,7 +103,7 @@ def plot_ratio_scatter(data):
     plt.xticks(x, models, rotation=45, ha='right', fontsize=8)
     plt.title('Relative Cost: Strategy Improvement vs Value Iteration')
     plt.tight_layout()
-    plt.savefig("ratio_SI_VI_bar_chart.png", dpi=500)
+    plt.savefig(os.path.join("results", "plots", "ratio_SI_VI_bar_chart.png"), dpi=500)
     plt.close()
 
 
@@ -155,7 +156,6 @@ if __name__ == "__main__":
         "3200_1_Ab_shuttle_11-24-2025_17-17-12",
         "5000_2_Ab_shuttle_11-24-2025_17-22-47",
         "7200_6_Ab_shuttle_11-24-2025_17-26-19",
-        # "9800_13_Ab_shuttle_11-24-2025_17-32-05",
         ]
 
     adds[uav_str] = [
@@ -198,7 +198,7 @@ if __name__ == "__main__":
         results.update(results_val_iter)
         results.update(results_strtgy)
 
-        pd.DataFrame.from_dict(results, orient="index").to_csv(f"results_{add[:14]}.csv")
+        pd.DataFrame.from_dict(results, orient="index").to_csv(os.path.join("results", "each_imdp_result", f"results_{add[:14]}.csv"))
 
         print(f"\tUpdating results to CSV...")
         csv_path = Path(f"gen_imdp_info/IMDPs_info_{model_type}.csv")

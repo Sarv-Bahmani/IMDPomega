@@ -5,6 +5,7 @@ from product import Product
 import random
 from typing import Dict, Set, Tuple, FrozenSet
 import time
+import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -201,7 +202,7 @@ def plot_init_evolution_stra_impr(res, add):
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
     plt.tight_layout()
-    plt.savefig(f"Evolution_InitStates_Strategy_Improvement_{add}.png")
+    plt.savefig(os.path.join("results", "initial_states", f"Evolution_InitStates_Strategy_Improvement_{add}.png"))
     plt.close()
 
 
