@@ -1,13 +1,9 @@
 import gurobipy as gp
-from imdp import IMDP
-from automata import Automata
-from product import Product
 import random
-from typing import Dict, Set, Tuple, FrozenSet
+from typing import Dict, Tuple, FrozenSet
 import time
 import os
 import matplotlib.pyplot as plt
-import pandas as pd
 
 from datetime import datetime
 def now_time():
@@ -153,11 +149,16 @@ def update_environment_policy(V, player_strategy, P):
     return env_policy
 
 
-def converged(V_old, V_new, tol):
-    for state in V_old.keys():
-        if abs(V_old[state] - V_new[state]) > tol:
-            return False
-    return True
+def converged(V_old, V_new):
+    old_sum = sum(V_old.values())
+    new_sum = sum(V_new.values())
+    if (new_sum > old_sum):
+        print(f"Value function increased from {old_sum} to {new_sum}")
+        return True
+    if (new_sum == old_sum):
+        print(f"Value function unchanged")
+        return True
+    return False
 
 
 def calc_init_mean(P, V):
@@ -168,27 +169,20 @@ def calc_init_mean(P, V):
     return mean_V
 
 
-def strategy_improve(P, eps):
+def strategy_improve(P):
     env_policy = initialize_env_policy_random(P)
-    V = {}
-    for state in P.states:
-        if   state in P.target     : V[state] = 1.0
-        elif state in P.losing_sink: V[state] = 0.0
-        else                       : V[state] = 0.5
-
     max_iterations = 51
     mean_V_list = []
 
-
     for iterator in range(max_iterations):
-        mean_i_V = calc_init_mean(P, V)
-        mean_V_list.append(mean_i_V)
         V_new, player_strategy = solve_player_LP(env_policy, P)
         env_policy = update_environment_policy(V_new, player_strategy, P)
-        if converged(V, V_new, tol=eps):
-            V = V_new
-            break
+        if iterator > 0:
+            if converged(V, V_new):
+                break
         V = V_new
+        mean_i_V = calc_init_mean(P, V)
+        mean_V_list.append(mean_i_V)
     return V, iterator, mean_V_list
 
 
@@ -206,9 +200,9 @@ def plot_init_evolution_stra_impr(res, add):
     plt.close()
 
 
-def strategy_improve_scope(P, eps):
+def strategy_improve_scope(P):
     start_time = time.perf_counter()
-    values, iterator, mean_V_list  = strategy_improve(P, eps=eps)
+    values, iterator, mean_V_list  = strategy_improve(P)
     execution_time = time.perf_counter() - start_time
     return {
         mean_V_list_str: mean_V_list,
