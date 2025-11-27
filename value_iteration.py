@@ -22,7 +22,6 @@ Label = FrozenSet[str]
 
 iter_init_save = 1
 iter_print = 1
-up_contrac_fctr = 0.99
 
 from imdp import IMDP
 from automata import Automata
@@ -74,7 +73,7 @@ def calc_init_mean(P, L, U):
     mean_U = statistics.mean(mean_i_U) if mean_i_U else 0.0
     return mean_L, mean_U
 
-def interval_iteration(P, eps, max_iter = 351):
+def interval_iteration(P, max_iter = 351, up_contrac_fctr=0.999):
     L: Dict[ProdState, float] = {x: 0.0 for x in P.states}
     U: Dict[ProdState, float] = {x: 1.0 for x in P.states}
 
@@ -82,27 +81,12 @@ def interval_iteration(P, eps, max_iter = 351):
     U.update({x: 0.0 for x in P.losing_sink})   
 
     mean_L_list, mean_U_list = [], []
-
-    states_vals = []
-    iters = [] 
-    list_states = list(P.states)
     
     for iterator in range(max_iter):
-        if iterator % iter_init_save == 0:# and iterator > 1:            
+        if iterator % iter_init_save == 0 and iterator > 1:            
             mean_L, mean_U = calc_init_mean(P, L, U)
             mean_L_list.append(mean_L)
             mean_U_list.append(mean_U)
-
-        if iterator % iter_print == 0:
-            print("Iteration:", iterator)
-            states_vals.append([L[s] for s in list_states])
-            iters.append(iterator)
-            df = pd.DataFrame(data=states_vals, index=iters, columns=list_states)
-            df.index.name = "iteration"
-            df.to_csv("VI_l_vals.csv")
-
-        deltaL = 0.0
-        deltaU = 0.0
 
         for x in P.states:
             if x in P.target:
@@ -128,8 +112,6 @@ def interval_iteration(P, eps, max_iter = 351):
                 newL = best_min
                 newU = best_max
 
-            deltaL = max(deltaL, abs(newL - L[x]))
-            deltaU = max(deltaU, abs(newU - U[x]))
             L[x], U[x] = newL, newU
 
         # gap = max(U[x] - L[x] for x in P.states)
@@ -140,9 +122,9 @@ def interval_iteration(P, eps, max_iter = 351):
 
     return L, U, iterator, mean_L_list, mean_U_list
 
-def value_iteration_scope(P, eps):
+def value_iteration_scope(P, up_contrac_fctr):
     start_time = time.perf_counter()
-    L, U, iterator, mean_L_list, mean_U_list  = interval_iteration(P, eps=eps)
+    L, U, iterator, mean_L_list, mean_U_list  = interval_iteration(P, up_contrac_fctr=up_contrac_fctr)
     execution_time = time.perf_counter() - start_time
     return {
         mean_L_list_str: mean_L_list,
@@ -167,7 +149,6 @@ def plot_init_evolution_val_iter(res, add):
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
     plt.tight_layout()
-    plt.savefig(f"Evolution_InitSt_VI_{add}.png")
     plt.savefig(os.path.join("results", "initial_states", f"Evolution_InitSt_VI_{add}.png"))
     plt.close()
 
