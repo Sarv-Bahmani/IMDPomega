@@ -1,6 +1,7 @@
 import sys
 import csv
 import os
+import json
 from pathlib import Path
 import matplotlib.pyplot as plt
 
@@ -142,31 +143,17 @@ def generate_all_plots(csv_path):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) < 2:
-            print("Usage: python imdp_runner.py <Model Type>")
+    if len(sys.argv) < 3:
+            print("Usage: python imdp_runner.py <Model Type> <json Address>")
             sys.exit(1)
 
     model_type = sys.argv[1]
-
-
-    adds = {}
-    adds[shuttle_str] = [
-        "3200_1_Ab_shuttle_11-24-2025_17-17-12",
-        "5000_2_Ab_shuttle_11-24-2025_17-22-47",
-        # "7200_6_Ab_shuttle_11-24-2025_17-26-19",
-        ]
-
-    adds[uav_str] = [
-        "784-0.5-Ab_UAV_10-16-2025_20-48-14",
-        "1024-1-Ab_UAV_11-14-2025_07-27-06",
-        "1296-2-Ab_UAV_11-14-2025_07-33-15",
-        # "1600-3-Ab_UAV_10-16-2025_13-57-21",
-        # "1800-5-Ab_UAV_10-16-2025_15-11-36",
-        # "2160-9-Ab_UAV_10-16-2025_15-16-07",
-        # "2304-12-Ab_UAV_11-14-2025_08-04-41",
-        # "2430-15-Ab_UAV_10-16-2025_15-25-59",
-        ]
     
+    json_path = Path(sys.argv[2])
+    with json_path.open('r') as f:
+        adds = json.load(f)
+
+
 
     for add in adds[model_type]:
         print(f"Will Process IMDP at address: {add}")

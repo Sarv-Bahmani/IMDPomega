@@ -32,6 +32,8 @@ IMDPOMEGA/
 │   ├── initial_states/           # VI/PI evolution plots per instance
 │   └── plots/                    # All aggregate figures for the paper
 │
+├── imdp_adds.json                # list of IMDP addresses per model type
+│
 ├── automata.py                   # HOA loader and automaton construction
 ├── imdp.py                       # IMDP loader (from data/raw directories)
 ├── product.py                    # IMDP × Automaton product construction
@@ -42,21 +44,38 @@ IMDPOMEGA/
 ```
 
 ---
+## IMDP Address Management
 
+IMDP addresses should be stored in a JSON file:
+```json
+{
+  "shuttle": [
+    "3200_1_Ab_shuttle_11-24-2025_17-17-12",
+    ...
+  ],
+
+  "uav": [
+    "784-0.5-Ab_UAV_10-16-2025_20-48-14",
+    ...
+  ]
+}
+```
+
+---
 ## How to Run
 
 Run the full experiment pipeline for a given model type:
 ```bash
-python imdp_runner.py shuttle
+python imdp_runner.py <Model_Type> <Path_to_JSON>
 ```
-or
+### Examples
 ```bash
-python imdp_runner.py uav
+python imdp_runner.py uav imdp_adds.json
 ```
 
 The runner will:
 
-1. Load all IMDPs for the selected model type from `data/raw/<model_type>/`.
+1. Load all IMDPs for the selected model type from `data/raw/<model_type>/<address>/`.
 2. Load the Büchi automaton from `hoa_files/my_automaton.hoa`.
 3. Construct the synchronous product IMDP × automaton.
 4. Perform:
@@ -90,6 +109,7 @@ For each IMDP instance, the tool:
 
 ## Customization
 
+* Add or remove IMDPs simply by editing `imdp_adds.json`.
 * Modify automaton by replacing `hoa_files/my_automaton.hoa`.
 * Add/remove IMDPs by placing them under:
 
@@ -101,18 +121,10 @@ For each IMDP instance, the tool:
 ---
 
 ## IMDP Input Format
+IMDPs are directories.
+Each entry in imdp_adds.json must correspond to a subfolder:
 
-IMDPs are **folders**, not JSON files.
-
-Each IMDP is loaded by:
-
-```python
-IMDP(model_type=<shuttle|uav>, address="<folder-name>", noise_samples=...)
-```
-
-The runner selects IMDPs based on:
-
-```
+```bash
 data/raw/shuttle/<address>/
 data/raw/UAV/<address>/
 ```
