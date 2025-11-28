@@ -140,12 +140,11 @@ def plot_init_evolution_val_iter(res, add):
     mean_U_list = res[mean_U_list_str]
 
     x_values = list(range(iter_init_save, (len(mean_L_list)+1) * iter_init_save, iter_init_save))
-
+    
+    plt.figure(figsize=(8/1.5,3.2))
     plt.plot(x_values, mean_L_list, marker='o', label='Mean Lower bound')
     plt.plot(x_values, mean_U_list, marker='s', label='Mean Upper bound')
 
-    plt.xlabel('Iterations')
-    plt.ylabel('Probability')
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
     plt.tight_layout()
