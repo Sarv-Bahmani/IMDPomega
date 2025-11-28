@@ -1,9 +1,28 @@
+import os
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
+BASE_FONTSIZE = 10
+
+mpl.rcParams.update({
+    "text.usetex": False,
+    "font.family": "serif",
+
+    "font.size": BASE_FONTSIZE,      
+    "axes.labelsize": BASE_FONTSIZE+1, 
+    "axes.titlesize": BASE_FONTSIZE+1,
+    "xtick.labelsize": BASE_FONTSIZE,    
+    "ytick.labelsize": BASE_FONTSIZE,
+    "legend.fontsize": BASE_FONTSIZE,
+})
+
+
+
+
 import sys
 import csv
-import os
 import json
 from pathlib import Path
-import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
@@ -78,17 +97,52 @@ def update_csv_reslt(csv_path, address, res):
 
 
 
-def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
+# def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1):
+#     results.sort(key=lambda d: d[x_var])
+#     xs = [d[x_var]/unit for d in results]
+#     ys = [d[y_var] for d in results]
+#     plt.figure()
+#     plt.plot(xs, ys, marker="o")
+#     plt.xlabel(x_lab)
+#     plt.ylabel(y_var)
+#     plt.grid(True)
+#     plt.savefig(os.path.join("results", "plots", f"{pic_name}.png"))
+#     plt.close()
+
+
+def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1, y_label=None, line_label=None, figsize=(5.2, 3.2)):
     results.sort(key=lambda d: d[x_var])
-    xs = [d[x_var]/unit for d in results]
+    xs = [d[x_var] / unit for d in results]
     ys = [d[y_var] for d in results]
-    plt.figure()
-    plt.plot(xs, ys, marker="o")
-    plt.xlabel(x_lab)
-    plt.ylabel(y_var)
-    plt.grid(True)
-    plt.savefig(os.path.join("results", "plots", f"{pic_name}.png"))
-    plt.close()
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    ax.plot(xs, ys, marker="o", linewidth=2.0,
+            markersize=4, label=line_label)
+
+    ax.set_xlabel(x_lab)
+
+    ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
+
+    for spine in ax.spines.values():
+        spine.set_linewidth(1.5)
+
+    if line_label is not None:
+        leg = ax.legend(frameon=True)
+        leg.get_frame().set_linewidth(1.0)
+
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label1.set_fontsize(BASE_FONTSIZE)
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label1.set_fontsize(BASE_FONTSIZE)
+
+    fig.tight_layout()
+    out_dir = os.path.join("results", "plots")
+    os.makedirs(out_dir, exist_ok=True)
+    fig.savefig(os.path.join(out_dir, f"{pic_name}.png"), dpi=500)
+
+    plt.close(fig)
+
 
 
 
@@ -96,15 +150,17 @@ def plot_ratio_scatter(data):
     models = [rec['model'] for rec in data]
     ratios = [rec['ratio_SI_VI'] for rec in data]
 
-    plt.figure(figsize=(len(models)/2,3))
+    plt.figure(figsize=(len(models)/1.5,3.2))
     x = np.arange(len(models)) 
     plt.bar(x, ratios) 
     plt.axhline(1.0, linestyle='--', linewidth=1)
-    plt.ylabel('SI_time / VI_time')
-    plt.xticks(x, models, rotation=45, ha='right', fontsize=8)
-    plt.title('Relative Cost: Strategy Improvement vs Value Iteration')
+    # plt.ylabel('SI_time / VI_time')
+    plt.xticks(x, models, rotation=45, ha='right', fontsize=BASE_FONTSIZE)
+    # plt.title('Relative Cost: Strategy Improvement vs Value Iteration')
+
     plt.tight_layout()
     plt.savefig(os.path.join("results", "plots", "ratio_SI_VI_bar_chart.png"), dpi=500)
+
     plt.close()
 
 
@@ -117,7 +173,7 @@ def generate_all_plots(csv_path):
         reader = csv.DictReader(f)
         for row in reader:
             record = {}
-            record[transitions_str] = int(row[transitions_str])
+            record[transitions_str] = float(row[transitions_str]) / (10**6)  # in million
             record[Exported_States_PRISM_str] = int(row[Exported_States_PRISM_str])
             record[qual_time_str] = float(row[qual_time_str])
             record[val_iter_time_str] = float(row[val_iter_time_str])
@@ -130,15 +186,16 @@ def generate_all_plots(csv_path):
             data.append(record)
     
 
-
     plot_ratio_scatter(data)
-    
 
     x_var_list = [transitions_str, Exported_States_PRISM_str]
     y_var_list = [qual_time_str, val_iter_time_str,  val_iter_converge_iter_str, strat_imprv_Execution_time_sec_str, ratio_str]
-    for x_var in x_var_list:
-        for y_var in y_var_list:
-            plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}", x_var)
+    # for x_var in x_var_list:
+    for y_var in y_var_list:
+        x_var = transitions_str
+        plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}", f"million {transitions_str}")
+        x_var = Exported_States_PRISM_str
+        plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}", "States")
 
 
 if __name__ == "__main__":
@@ -148,7 +205,8 @@ if __name__ == "__main__":
             sys.exit(1)
 
     model_type = sys.argv[1]
-    
+    csv_path = Path(f"gen_imdp_info/IMDPs_info_{model_type}.csv")
+
     json_path = Path(sys.argv[2])
     with json_path.open('r') as f:
         adds = json.load(f)
@@ -186,7 +244,6 @@ if __name__ == "__main__":
         pd.DataFrame.from_dict(results, orient="index").to_csv(os.path.join("results", "each_imdp_result", f"results_{add[:14]}.csv"))
 
         print(f"\tUpdating results to CSV...")
-        csv_path = Path(f"gen_imdp_info/IMDPs_info_{model_type}.csv")
 
         update_csv_reslt(csv_path, add, results)
         print(f"\tCSV is updated.")
