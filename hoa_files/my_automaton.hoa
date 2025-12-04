@@ -1,26 +1,23 @@
 HOA: v1
-name: "F(G(init | reach) | GFdeadlock)"
-States: 5
+name: "F(G(init | reach) | G!deadlock)"
+States: 4
 Start: 0
 AP: 3 "init" "reach" "deadlock"
 acc-name: Buchi
 Acceptance: 1 Inf(0)
 properties: trans-labels explicit-labels state-acc complete
-properties: stutter-invariant
+properties: stutter-invariant very-weak
 --BODY--
 State: 0
 [t] 0
 [0 | 1] 1
-[2] 2
+[!2] 2
 State: 1 {0}
 [0 | 1] 1
-[!0&!1] 4
+[!0&!1] 3
 State: 2 {0}
-[2] 2
-[!2] 3
+[!2] 2
+[2] 3
 State: 3
-[2] 2
-[!2] 3
-State: 4
-[t] 4
+[t] 3
 --END--
