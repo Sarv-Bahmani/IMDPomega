@@ -1,7 +1,7 @@
-# IMDP × Büchi Automaton Experiment Framework
+# IMDP × Automaton Experiment Framework
 
-This project reproduces all experiments in our **IMDP × Büchi automaton** paper, using **Value Iteration**, **Policy Iteration**, and reporting the results for **Qualitative Analysis**.
-It loads IMDP models, constructs the synchronous product with a Büchi automaton, runs the quantitative solvers, and generates all plots and CSV outputs reported in the paper.
+This project reproduces all experiments in our **IMDP × Automaton** paper, using **Value Iteration**, **Policy Iteration**, and reporting the results for **Qualitative Analysis**.
+It loads IMDP models, constructs the synchronous product with an automaton, runs the quantitative solvers, and generates all plots and CSV outputs reported in the paper.
 
 ---
 
@@ -25,7 +25,7 @@ IMDPOMEGA/
 │   └── IMDPs_info_uav.csv
 │
 ├── hoa_files/
-│   └── my_automaton.hoa          # Büchi automaton (HOA format)
+│   └── my_.hoa          # Automaton (HOA format)
 │
 ├── results/
 │   ├── each_imdp_result/         # Per-instance CSV results
@@ -76,7 +76,7 @@ python imdp_runner.py uav imdp_adds.json
 The runner will:
 
 1. Load all IMDPs for the selected model type from `data/raw/<model_type>/<address>/`.
-2. Load the Büchi automaton from `hoa_files/my_automaton.hoa`.
+2. Load the automaton from `hoa_files/my_automaton.hoa`.
 3. Construct the synchronous product IMDP × automaton.
 4. Perform:
 
