@@ -83,7 +83,7 @@ def interval_iteration(P, max_iter = 351, up_contrac_fctr=0.999):
     mean_L_list, mean_U_list = [], []
     
     for iterator in range(max_iter):
-        if iterator % iter_init_save == 0 and iterator > 1:            
+        if iterator % iter_init_save == 0: #and iterator > 1:            
             mean_L, mean_U = calc_init_mean(P, L, U)
             mean_L_list.append(mean_L)
             mean_U_list.append(mean_U)
@@ -135,7 +135,7 @@ def value_iteration_scope(P, up_contrac_fctr):
         val_iter_time_str: execution_time
     }
 
-def plot_init_evolution_val_iter(res, add):
+def plot_init_evolution_val_iter(res, add, Automata_name):
     mean_L_list = res[mean_L_list_str]
     mean_U_list = res[mean_U_list_str]
 
@@ -148,7 +148,11 @@ def plot_init_evolution_val_iter(res, add):
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
     plt.tight_layout()
-    plt.savefig(os.path.join("results", "initial_states", f"Evolution_InitSt_VI_{add}.png"))
+
+
+    folder = os.path.join("results", "initial_states")
+    os.makedirs(folder, exist_ok=True)
+    plt.savefig(os.path.join(folder, f"VI_Automata_{Automata_name}_IMDP_{add}_Evolution_InitSt.png"))
     plt.close()
 
 

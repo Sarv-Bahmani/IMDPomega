@@ -66,7 +66,8 @@ class Product:
         for a in self.imdp.actions.get(s, ()):
             outs = self.imdp.intervals.get((s, a), {})
             if not outs:    continue
-            labset = self.imdp.label.get(s, frozenset())
+            # labset = self.imdp.label.get(s, frozenset())
+            labset = self.imdp.label.get(s, frozenset()) & self.buchi.ap
             next_qs = self.buchi.step(q, labset)
             for q3 in next_qs:
                 prod_outs = {}

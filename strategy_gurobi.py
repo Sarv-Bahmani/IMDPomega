@@ -187,7 +187,7 @@ def strategy_improve(P):
 
 
 iter_init_save = 1
-def plot_init_evolution_stra_impr(res, add):
+def plot_init_evolution_stra_impr(res, add, Automata_name):
     mean_V_list = res[mean_V_list_str]
     x_values = list(range(iter_init_save, (len(mean_V_list)+1) * iter_init_save, iter_init_save))
     plt.plot(x_values, mean_V_list, marker='o', label='Mean Initial States Value bound')
@@ -196,7 +196,8 @@ def plot_init_evolution_stra_impr(res, add):
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
     plt.tight_layout()
-    plt.savefig(os.path.join("results", "initial_states", f"Evolution_InitStates_Strategy_Improvement_{add}.png"))
+    plt.savefig(os.path.join("results", "initial_states", 
+                             f"SI_Automata_{Automata_name}_IMDP_{add}_Evolution_InitSt.png"))
     plt.close()
 
 
