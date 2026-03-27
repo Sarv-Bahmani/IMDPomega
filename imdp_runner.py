@@ -70,6 +70,26 @@ def update_row(row, res):
         
 
 def update_csv_reslt(csv_path, address, res):
+
+    # ensure folder exists
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # if file does not exist → create it with header
+    if not csv_path.exists():
+        print(f"CSV not found. Creating: {csv_path}")
+        with csv_path.open('w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=[
+                qual_time_str,
+                val_iter_time_str,
+                val_iter_converge_iter_str,
+                strat_imprv_Execution_time_sec_str,
+                strat_imprv_Convergence_iteration_str,
+                address_str, 
+                noise_samples_str
+            ])
+            writer.writeheader()
+
+
     rows = []
     with csv_path.open(newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -146,7 +166,7 @@ def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1, y_label=None, line_la
 
 
 
-def plot_ratio_scatter(data):
+def plot_ratio_scatter(data, Automata_name):
     models = [rec['model'] for rec in data]
     ratios = [rec['ratio_SI_VI'] for rec in data]
 
@@ -159,13 +179,13 @@ def plot_ratio_scatter(data):
     # plt.title('Relative Cost: Strategy Improvement vs Value Iteration')
 
     plt.tight_layout()
-    plt.savefig(os.path.join("results", "plots", "ratio_SI_VI_bar_chart.png"), dpi=500)
+    plt.savefig(os.path.join("results", "plots", f"ratio_SI_VI_bar_chart_Automata_{Automata_name}.png"), dpi=500)
 
     plt.close()
 
 
 
-def generate_all_plots(csv_path):
+def generate_all_plots(csv_path, Automata_name):
     csv_path = Path(csv_path)
     
     data = []
@@ -186,39 +206,59 @@ def generate_all_plots(csv_path):
             data.append(record)
     
 
-    plot_ratio_scatter(data)
+    plot_ratio_scatter(data, Automata_name)
 
     x_var_list = [transitions_str, Exported_States_PRISM_str]
     y_var_list = [qual_time_str, val_iter_time_str,  val_iter_converge_iter_str, strat_imprv_Execution_time_sec_str, ratio_str]
     # for x_var in x_var_list:
     for y_var in y_var_list:
         x_var = transitions_str
-        plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}", f"million {transitions_str}")
+        plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}_Automata_{Automata_name}", f"million {transitions_str}")
         x_var = Exported_States_PRISM_str
-        plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}", "States")
+        plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}_Automata_{Automata_name}", "States")
+
 
 
 if __name__ == "__main__":
 
-    if len(sys.argv) < 3:
-            print("Usage: python imdp_runner.py <Model Type> <json Address>")
-            sys.exit(1)
+    if sys.argv[1] == "toy":
+        model_type = "toy"
+        adds = {}
+        adds[model_type] = [sys.argv[1]]
+        Automata_name = sys.argv[1]
+        
+    else:
+        if len(sys.argv) < 4:
+                print("Usage: python imdp_runner.py <Model Type> <json Address> <Automata_name>")
+                sys.exit(1)
+        
+        print("Starting IMDP Runner...")
 
-    model_type = sys.argv[1]
-    csv_path = Path(f"gen_imdp_info/IMDPs_info_{model_type}.csv")
+        model_type = sys.argv[1]
+        Automata_name = sys.argv[3]
 
-    json_path = Path(sys.argv[2])
-    with json_path.open('r') as f:
-        adds = json.load(f)
+        json_path = Path(sys.argv[2])
+        print(f"Reading model addresses from JSON file: {json_path}")
+        with json_path.open('r') as f:
+            adds = json.load(f)
+
+    csv_path = Path(f"gen_imdp_info/IMDPs_info_{model_type}_{Automata_name}.csv")
 
 
 
     for add in adds[model_type]:
         print(f"Will Process IMDP at address: {add}")
-        I = IMDP(model_type=model_type, address=add, noise_samples=noise_samples)
+
+        if sys.argv[1] == "toy":
+            from toy_imdp_2 import ToyIMDP
+            I = ToyIMDP()
+        else:
+            I = IMDP(model_type=model_type, address=add, noise_samples=noise_samples)
+        
+
         print("\tIMDP is loaded.")
         all_labsets = {I.label[s] for s in I.states}
-        B = Automata(all_labsets, "my_automaton.hoa", read_from_hoa=True)
+        B = Automata(all_labsets, f"{Automata_name}.hoa", read_from_hoa=True)
         print("\tWill build product...")
         P = Product(I, B)
         print("\tProduct is built.")
@@ -226,22 +266,26 @@ if __name__ == "__main__":
         results = {}
 
         print("\t\tWill run value iteration...")
-        up_contrac_fctr = 0.999 if model_type == uav_str else 0.99
+        up_contrac_fctr = 0.9999 # if model_type == uav_str else 0.99
         results_val_iter = value_iteration_scope(P, up_contrac_fctr)
-        plot_init_evolution_val_iter(results_val_iter, add[:14])
+        plot_init_evolution_val_iter(results_val_iter, add, Automata_name)
         print("\t\tValue iteration is done.")
 
 
         print("\t\tWill run strategy improve ...")
         results_strtgy = strategy_improve_scope(P)
-        plot_init_evolution_stra_impr(results_strtgy, add[:14])
+        plot_init_evolution_stra_impr(results_strtgy, add, Automata_name)
         print("\t\tstrategy improve is done.")
 
         results.update({qual_time_str: P.qualitative_time_sec})
         results.update(results_val_iter)
         results.update(results_strtgy)
 
-        pd.DataFrame.from_dict(results, orient="index").to_csv(os.path.join("results", "each_imdp_result", f"results_{add[:14]}.csv"))
+
+        folder = os.path.join("results", "each_imdp_result")
+        os.makedirs(folder, exist_ok=True)
+
+        pd.DataFrame.from_dict(results, orient="index").to_csv(os.path.join(folder, f"Automata_{Automata_name}_{add[:14]}_results.csv"))
 
         print(f"\tUpdating results to CSV...")
 
@@ -249,7 +293,9 @@ if __name__ == "__main__":
         print(f"\tCSV is updated.")
 
 
-    generate_all_plots(csv_path)
+    print("Generating all plots...")
+    generate_all_plots(csv_path, Automata_name)
+    print("All done!")
 
 
     
