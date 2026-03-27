@@ -258,7 +258,7 @@ if __name__ == "__main__":
 
         print("\tIMDP is loaded.")
         all_labsets = {I.label[s] for s in I.states}
-        B = Automata(all_labsets, f"{Automata_name}.hoa", read_from_hoa=True)
+        B = Automata(f"{Automata_name}.hoa")
         print("\tWill build product...")
         P = Product(I, B)
         print("\tProduct is built.")

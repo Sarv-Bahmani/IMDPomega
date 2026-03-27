@@ -15,9 +15,7 @@ hoa_path = Path("hoa_files")
 
 
 class Automata:
-    def __init__(self, ap: Set[str], hoa_name, read_from_hoa=True):
-        self.ap = set(ap)
-        # self.ap = {tok for S in ap for tok in S}
+    def __init__(self, hoa_name):
         self.Q: Set[QState] = set()
         self.init: Set[QState] = set()
         self.q0 = 0
@@ -26,10 +24,7 @@ class Automata:
         hoa_address = hoa_path / hoa_name
         with open(hoa_address) as f:
             hoa_text = f.read()
-        if read_from_hoa:
-            self.parse_hoa_to_auto(hoa_text)
-        if not read_from_hoa:   
-            self.buchi_reach()
+        self.parse_hoa_to_auto(hoa_text)
 
     def add_state(self, q, initial=False, accepting=False):
         self.Q.add(q)
@@ -70,7 +65,6 @@ class Automata:
                     ap_name = parts[j].strip('"')
                     ap_list.append(ap_name)
             i += 1
-        self.ap = set(ap_list)
         
         i += 1
         current_state = None
@@ -95,7 +89,6 @@ class Automata:
                     self.add_edge(current_state, label, dest_state)
             
             i += 1
-        # return B
 
 
     def parse_guard_to_labels(self, guard: str, ap_list: List[str]) -> Set[FrozenSet[str]]:
@@ -132,23 +125,4 @@ class Automata:
 
 
 
-
-
-
-
-    def buchi_reach(self): 
-        self.add_state(0) 
-        self.add_state(1, initial=True, accepting=True) 
-        self.add_state(2) 
-        for labset in self.ap: 
-            self.add_edge(2, labset, 2) 
-            if "failed" in labset: 
-                self.add_edge(0, labset, 2) 
-                self.add_edge(1, labset, 2) 
-            elif "reached" in labset: # and not "deadlock" in labset and not "failed" in labset: 
-                self.add_edge(0, labset, 1) 
-                self.add_edge(1, labset, 1) 
-            else: 
-                self.add_edge(0, labset, 0) 
-                self.add_edge(1, labset, 1) 
 
