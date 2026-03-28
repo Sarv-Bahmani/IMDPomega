@@ -318,12 +318,15 @@ if __name__ == "__main__":
 
             update_csv_reslt(csv_path, add, results)
             print(f"\tCSV is updated.")
+            print("All done! with IMSP ", add)
+            print("\n\n\n")
 
 
         print("Generating all plots...")
         generate_all_plots(csv_path, Automata_name)
-        print("All done!")
-        print("\n\n\n")
+        print("All done! with Automata ", Automata_name)
+        print("\n\n\n\n")
+
 
 
 
