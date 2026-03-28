@@ -114,6 +114,26 @@ class IMDP:
         return True
 
 
+    def add_absorbing_self_loops_to_terminal_states(self):
+        """
+        If a state has no enabled action and is terminal by label,
+        add a synthetic self-loop action with probability [1,1].
+        """
+        # terminal_markers = {"reached", "goal", "target", "deadlock", "failed", "unsafe", "bad"}
+
+        for s in self.states:
+            has_action = len(self.actions.get(s, set())) > 0
+            if has_action:
+                continue
+
+            # labs = set(self.label.get(s, frozenset()))
+            # if not (labs & terminal_markers):
+                # continue
+
+            a = f"self_loop_{s}"
+            self.actions[s].add(a)
+            self.intervals[(s, a)] = {s: (1.0, 1.0)}
+
     def imdp_from_files_quant(self): #, sta_path: str, lab_path: str, tra_path: str, I) -> Dict[str, Set[int]]:
         sta_path = self.base / sta; lab_path = self.base / lab; tra_path = self.base / tra
         # I is an instance of your IMDP() class from quant (1).py
@@ -127,6 +147,9 @@ class IMDP:
             raise ValueError("Some transition has upper > 0 but lower = 0")
         elif is_SMDP:
             print("This is a valid IMDP (no zero lower bounds with positive upper bounds).")
+
+        self.add_absorbing_self_loops_to_terminal_states()
+
         return {"reached": goal, "avoid": avoid, "init": init}, AtomicP
 
 

@@ -1,5 +1,5 @@
 import collections
-from collections import defaultdict
+from collections import deque, defaultdict
 import time
 from typing import Dict, Set, Tuple, FrozenSet, Iterable, List
 from pathlib import Path
@@ -9,7 +9,6 @@ import sys
 sys.setrecursionlimit(200000)
 
 
-csv_path = Path("gen_imdp_info/IMDPs_info.csv")
 root_models = Path("MDPs")
 
 State = int
@@ -48,39 +47,83 @@ class Product:
 
 
     def build_product(self):
+        # reset, in case you ever rebuild
+        self.states = set()
+        self.init_states = set()
+        self.actions = defaultdict(set)
+        self.trans_prod = {}
+        self.acc_states = set()
+
+        # 1) build initial product states only
         for s in self.imdp.states:
-            for q in self.buchi.Q:
+            if "init" not in self.imdp.label.get(s, frozenset()):
+                continue
+            for q in self.buchi.init:
                 ps = (s, q)
+                self.init_states.add(ps)
                 self.states.add(ps)
                 if q in self.buchi.acc:
                     self.acc_states.add(ps)
-                if "init" in self.imdp.label[s]: # and not "failed" in self.imdp.label[s]:
-                    # if q == self.buchi.q0:
-                    if q in self.buchi.init:
-                        self.init_states.add(ps)
 
-        for (s, q) in set(self.states):
-            self.trans_update(s, q)
-      
+        # 2) BFS from initial product states
+        queue = deque(self.init_states)
+        visited = set(self.init_states)
+
+        while queue:
+            (s, q) = queue.popleft()
+
+            # build outgoing transitions of this reachable state
+            succs = self.trans_update(s, q)
+
+            # any newly discovered successor gets queued
+            for ps2 in succs:
+                if ps2 not in visited:
+                    visited.add(ps2)
+                    self.states.add(ps2)
+                    if ps2[1] in self.buchi.acc:
+                        self.acc_states.add(ps2)
+                    queue.append(ps2)
+
+
+
     def trans_update(self, s, q):
+        discovered_succs = set()
         for a in self.imdp.actions.get(s, ()):
             outs = self.imdp.intervals.get((s, a), {})
             if not outs:    continue
-            # labset = self.imdp.label.get(s, frozenset())
             labset = self.imdp.label.get(s, frozenset()) & self.buchi.ap
             next_qs = self.buchi.step(q, labset)
             for q3 in next_qs:
                 prod_outs = {}
                 self.actions[(s, q)].add((a,q3))
                 for s2, (l, u) in outs.items():
-                # if labset == frozenset({"init"}):
-                #     next_qs = next_qs.union(self.buchi.Q)
                     ps = (s2, q3)
+                    discovered_succs.add(ps)
                     old = prod_outs.get(ps, (0.0, 0.0))
                     prod_outs[ps] = (old[0] + l, old[1] + u)
-                    if q3 in self.buchi.acc:
-                        self.acc_states.add(ps)
                 self.trans_prod[((s, q), (a,q3))] = prod_outs
+        return discovered_succs
+
+    # def trans_update(self, s, q):
+    #     discovered_succs = set()
+    #     for a in self.imdp.actions.get(s, ()):
+    #         outs = self.imdp.intervals.get((s, a), {})
+            
+    #         if not outs:    continue
+    #         for s2, (l, u) in outs.items():
+    #             labset = self.imdp.label.get(s2, frozenset()) & self.buchi.ap
+    #             next_qs = self.buchi.step(q, labset)
+    #             for q3 in next_qs:
+    #                 prod_outs = {}
+    #                 self.actions[(s, q)].add((a,q3))
+    #                 ps = (s2, q3)
+    #                 discovered_succs.add(ps)
+    #                 old = prod_outs.get(ps, (0.0, 0.0))
+    #                 prod_outs[ps] = (old[0] + l, old[1] + u)
+    #                 self.trans_prod[((s, q), (a,q3))] = prod_outs
+        # return discovered_succs
+
+
 
     def prod_graph(self):
         for (ps, a), outs in self.trans_prod.items():

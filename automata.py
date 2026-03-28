@@ -16,6 +16,7 @@ hoa_path = Path("hoa_files")
 
 class Automata:
     def __init__(self, hoa_name):
+        self.ap = None
         self.Q: Set[QState] = set()
         self.init: Set[QState] = set()
         self.q0 = 0
@@ -89,7 +90,7 @@ class Automata:
                     self.add_edge(current_state, label, dest_state)
             
             i += 1
-
+        self.ap = set(ap_list)
 
     def parse_guard_to_labels(self, guard: str, ap_list: List[str]) -> Set[FrozenSet[str]]:
         if guard == 't':
