@@ -85,7 +85,7 @@ def update_csv_reslt(csv_path, address, res):
 
     # if file does not exist → create it with header
     if not csv_path.exists():
-        print(f"CSV not found. Creating: {csv_path}")
+        # print(f"CSV not found. Creating: {csv_path}")
         with csv_path.open('w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=[
                 address_str, 
@@ -246,7 +246,7 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
                 print("Usage: python imdp_runner.py <Model Type> <Automata folder address>")
                 sys.exit(1)
-        # print("Starting IMDP Runner...")
+        print("Starting IMDP Runner...")
         model_type = sys.argv[1]
         Automata_folder = sys.argv[2]
 
@@ -281,67 +281,68 @@ if __name__ == "__main__":
                     Exported_States_PRISM_str: exported_states,
                     transitions_str: transitions})      
 
-            # print("\tIMDP is loaded.")
+            print("\tIMDP is loaded.")
             all_labsets = {I.label[s] for s in I.states}
-            B = Automata(f"{Automata_name}")
+            B = Automata(Automata_folder, Automata_name)
 
-            print("\tAutomaton AP:", B.ap)
-            print("\tAutomaton init:", B.init)
-            print("\tAutomaton acc:", B.acc)
+            # print("\tAutomaton AP:", B.ap)
+            # print("\tAutomaton init:", B.init)
+            # print("\tAutomaton acc:", B.acc)
 
             reached_states = [s for s in I.states if "reached" in I.label.get(s, frozenset())]
-            print("\tNumber of IMDP states labeled reached:", len(reached_states))
+            # print("\tNumber of IMDP states labeled reached:", len(reached_states))
             # print("First reached states:", reached_states[:20])
 
 
             print("\t\tWill build product...")
             P = Product(I, B)
-            # print("\tProduct is built.")
+            print("\tProduct is built.")
 
 
-            print("Number of reachable product states:", len(P.states))
-            print("Number of accepting product states:", len(P.acc_states))
+            # print("Number of reachable product states:", len(P.states))
+            # print("Number of accepting product states:", len(P.acc_states))
             # print("Some accepting product states:", list(P.acc_states)[:20])
-            print("Number of initial product states:", len(P.init_states))
+            # print("Number of initial product states:", len(P.init_states))
             # print("Some initial product states:", list(P.init_states)[:20])
-            print("Number of accepting initial product states:", len(P.init_states & P.acc_states))
+            # print("Number of accepting initial product states:", len(P.init_states & P.acc_states))
             
-            print("Number of accepting end components:", len(P.aecs))
+            # print("Number of accepting end components:", len(P.aecs))
             print(f"\tTarget states: {len(P.target)} for IMDP {add} and Automata {Automata_name}")
 
-            print("\n\n\n")
 
-        #     print("\t\tWill run value iteration...")
-        #     up_contrac_fctr = 0.9999 # if model_type == uav_str else 0.99
-        #     results_val_iter = value_iteration_scope(P, up_contrac_fctr)
-        #     plot_init_evolution_val_iter(results_val_iter, add, Automata_name)
-        #     print("\t\tValue iteration is done.")
-
-
-        #     print("\t\tWill run strategy improve ...")
-        #     results_strtgy = strategy_improve_scope(P)
-        #     plot_init_evolution_stra_impr(results_strtgy, add, Automata_name)
-        #     print("\t\tstrategy improve is done.")
-
-        #     results.update({qual_time_str: P.qualitative_time_sec})
-        #     results.update(results_val_iter)
-        #     results.update(results_strtgy)
+            print("\t\tWill run value iteration...")
+            up_contrac_fctr = 0.9999 # if model_type == uav_str else 0.99
+            results_val_iter = value_iteration_scope(P, up_contrac_fctr)
+            plot_init_evolution_val_iter(results_val_iter, add, Automata_name)
+            print("\t\tValue iteration is done.")
 
 
-        #     folder = os.path.join("results", "each_imdp_result")
-        #     os.makedirs(folder, exist_ok=True)
+            print("\t\tWill run strategy improve ...")
+            results_strtgy = strategy_improve_scope(P)
+            plot_init_evolution_stra_impr(results_strtgy, add, Automata_name)
+            print("\t\tstrategy improve is done.")
 
-        #     pd.DataFrame.from_dict(results, orient="index").to_csv(os.path.join(folder, f"Automata_{Automata_name}_{add[:14]}_results.csv"))
-
-        #     print(f"\tUpdating results to CSV...")
-
-        #     update_csv_reslt(csv_path, add, results)
-        #     print(f"\tCSV is updated.")
+            results.update({qual_time_str: P.qualitative_time_sec})
+            results.update(results_val_iter)
+            results.update(results_strtgy)
 
 
-        # print("Generating all plots...")
-        # generate_all_plots(csv_path, Automata_name)
-        # print("All done!")
+            folder = os.path.join("results", "each_imdp_result")
+            os.makedirs(folder, exist_ok=True)
+
+            pd.DataFrame.from_dict(results, orient="index").to_csv(os.path.join(folder, f"Automata_{Automata_name}_{add[:14]}_results.csv"))
+
+            print(f"\tUpdating results to CSV...")
+
+            update_csv_reslt(csv_path, add, results)
+            print(f"\tCSV is updated.")
+
+
+        print("Generating all plots...")
+        generate_all_plots(csv_path, Automata_name)
+        print("All done!")
+        print("\n\n\n")
+
 
 
     

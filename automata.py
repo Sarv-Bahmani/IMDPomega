@@ -10,18 +10,16 @@ ProdState = Tuple[State, QState]
 Label = FrozenSet[str]
 
 
-hoa_path = Path("hoa_files")
-
-
 
 class Automata:
-    def __init__(self, hoa_name):
+    def __init__(self, hoa_path, hoa_name):
         self.ap = None
         self.Q: Set[QState] = set()
         self.init: Set[QState] = set()
         self.q0 = 0
         self.acc: Set[QState] = set()
         self.trans_automa: Dict[Tuple[QState, Label], Set[QState]] = defaultdict(set)
+        hoa_path = Path(hoa_path)
         hoa_address = hoa_path / hoa_name
         with open(hoa_address) as f:
             hoa_text = f.read()
