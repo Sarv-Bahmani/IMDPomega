@@ -70,7 +70,6 @@ def update_row(row, res):
     row[strat_imprv_Execution_time_sec_str] = str(res[strat_imprv_Execution_time_sec_str])
     row[strat_imprv_Convergence_iteration_str] = str(res[strat_imprv_Convergence_iteration_str])
 
-    # store ratio directly in the csv
     if res.get(val_iter_time_str, 0):
         row[ratio_str] = str(res[strat_imprv_Execution_time_sec_str] / res[val_iter_time_str])
     else:
@@ -80,12 +79,9 @@ def update_row(row, res):
 
 def update_csv_reslt(csv_path, address, res):
 
-    # ensure folder exists
     csv_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # if file does not exist → create it with header
     if not csv_path.exists():
-        # print(f"CSV not found. Creating: {csv_path}")
         with csv_path.open('w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=[
                 address_str, 
@@ -251,7 +247,6 @@ if __name__ == "__main__":
         Automata_folder = sys.argv[2]
 
     json_path = Path("imdp_adds.json")
-    # print(f"Reading model addresses from JSON file: {json_path}")
     with json_path.open('r') as f:
         adds = json.load(f)
 
@@ -285,28 +280,15 @@ if __name__ == "__main__":
             all_labsets = {I.label[s] for s in I.states}
             B = Automata(Automata_folder, Automata_name)
 
-            # print("\tAutomaton AP:", B.ap)
-            # print("\tAutomaton init:", B.init)
-            # print("\tAutomaton acc:", B.acc)
+
 
             reached_states = [s for s in I.states if "reached" in I.label.get(s, frozenset())]
-            # print("\tNumber of IMDP states labeled reached:", len(reached_states))
-            # print("First reached states:", reached_states[:20])
 
 
             print("\t\tWill build product...")
             P = Product(I, B)
             print("\tProduct is built.")
 
-
-            # print("Number of reachable product states:", len(P.states))
-            # print("Number of accepting product states:", len(P.acc_states))
-            # print("Some accepting product states:", list(P.acc_states)[:20])
-            # print("Number of initial product states:", len(P.init_states))
-            # print("Some initial product states:", list(P.init_states)[:20])
-            # print("Number of accepting initial product states:", len(P.init_states & P.acc_states))
-            
-            # print("Number of accepting end components:", len(P.aecs))
             print(f"\tTarget states: {len(P.target)} for IMDP {add} and Automata {Automata_name}")
 
 
