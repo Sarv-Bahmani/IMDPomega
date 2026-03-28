@@ -35,7 +35,6 @@ from value_iteration import value_iteration_scope, plot_init_evolution_val_iter
 from strategy_gurobi import strategy_improve_scope, plot_init_evolution_stra_impr
 
 noise_samples=20000
-noise_samples_str = "Noise Samples"
 root_models = Path("MDPs")
 
 shuttle_str = "shuttle"
@@ -57,17 +56,27 @@ mean_V_list_str = "mean_V_list"
 
 ratio_str = "ratio_SI_VI"
 
+
+
 def update_row(row, res):
+    row[Exported_States_PRISM_str] = str(res.get(Exported_States_PRISM_str, ""))
+    row[transitions_str] = str(res.get(transitions_str, ""))
+
     row[qual_time_str] = str(res.get(qual_time_str, ""))
 
     row[val_iter_time_str] = f"{res[val_iter_time_str]:.6f}"
     row[val_iter_converge_iter_str] = str(res[val_iter_converge_iter_str])
-    
+
     row[strat_imprv_Execution_time_sec_str] = str(res[strat_imprv_Execution_time_sec_str])
     row[strat_imprv_Convergence_iteration_str] = str(res[strat_imprv_Convergence_iteration_str])
 
+    # store ratio directly in the csv
+    if res.get(val_iter_time_str, 0):
+        row[ratio_str] = str(res[strat_imprv_Execution_time_sec_str] / res[val_iter_time_str])
+    else:
+        row[ratio_str] = ""
 
-        
+      
 
 def update_csv_reslt(csv_path, address, res):
 
@@ -79,13 +88,15 @@ def update_csv_reslt(csv_path, address, res):
         print(f"CSV not found. Creating: {csv_path}")
         with csv_path.open('w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=[
-                qual_time_str,
-                val_iter_time_str,
-                val_iter_converge_iter_str,
-                strat_imprv_Execution_time_sec_str,
-                strat_imprv_Convergence_iteration_str,
                 address_str, 
-                noise_samples_str
+                Exported_States_PRISM_str,
+                transitions_str,
+                val_iter_converge_iter_str,
+                val_iter_time_str,
+                strat_imprv_Convergence_iteration_str,
+                strat_imprv_Execution_time_sec_str,
+                qual_time_str,
+                ratio_str
             ])
             writer.writeheader()
 
@@ -106,7 +117,6 @@ def update_csv_reslt(csv_path, address, res):
     if not row_found:
         row = {fn: "" for fn in fieldnames}
         row[address_str] = address
-        row[noise_samples_str] = str(20000)
         update_row(row, res)
         rows.append(row)
 
@@ -179,7 +189,12 @@ def plot_ratio_scatter(data, Automata_name):
     # plt.title('Relative Cost: Strategy Improvement vs Value Iteration')
 
     plt.tight_layout()
-    plt.savefig(os.path.join("results", "plots", f"ratio_SI_VI_bar_chart_Automata_{Automata_name}.png"), dpi=500)
+
+    folder = os.path.join("results", "plots")
+    os.makedirs(folder, exist_ok=True)
+
+
+    plt.savefig(os.path.join(folder, f"ratio_SI_VI_bar_chart_Automata_{Automata_name}.png"), dpi=500)
 
     plt.close()
 
@@ -210,12 +225,12 @@ def generate_all_plots(csv_path, Automata_name):
 
     x_var_list = [transitions_str, Exported_States_PRISM_str]
     y_var_list = [qual_time_str, val_iter_time_str,  val_iter_converge_iter_str, strat_imprv_Execution_time_sec_str, ratio_str]
-    # for x_var in x_var_list:
-    for y_var in y_var_list:
-        x_var = transitions_str
-        plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}_Automata_{Automata_name}", f"million {transitions_str}")
-        x_var = Exported_States_PRISM_str
-        plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}_Automata_{Automata_name}", "States")
+    for x_var in x_var_list:
+        for y_var in y_var_list:
+            x_var = transitions_str
+            plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}_Automata_{Automata_name}", f"million {transitions_str}")
+            x_var = Exported_States_PRISM_str
+            plot_x(data, x_var, y_var, f"{y_var}_vs_{x_var}_Automata_{Automata_name}", "States")
 
 
 
@@ -228,74 +243,105 @@ if __name__ == "__main__":
         Automata_name = sys.argv[1]
         
     else:
-        if len(sys.argv) < 4:
-                print("Usage: python imdp_runner.py <Model Type> <json Address> <Automata_name>")
+        if len(sys.argv) < 3:
+                print("Usage: python imdp_runner.py <Model Type> <Automata folder address>")
                 sys.exit(1)
-        
-        print("Starting IMDP Runner...")
-
+        # print("Starting IMDP Runner...")
         model_type = sys.argv[1]
-        Automata_name = sys.argv[3]
+        Automata_folder = sys.argv[2]
 
-        json_path = Path(sys.argv[2])
-        print(f"Reading model addresses from JSON file: {json_path}")
-        with json_path.open('r') as f:
-            adds = json.load(f)
-
-    csv_path = Path(f"gen_imdp_info/IMDPs_info_{model_type}_{Automata_name}.csv")
+    json_path = Path("imdp_adds.json")
+    # print(f"Reading model addresses from JSON file: {json_path}")
+    with json_path.open('r') as f:
+        adds = json.load(f)
 
 
 
-    for add in adds[model_type]:
-        print(f"Will Process IMDP at address: {add}")
-
-        if sys.argv[1] == "toy":
-            from toy_imdp_2 import ToyIMDP
-            I = ToyIMDP()
-        else:
-            I = IMDP(model_type=model_type, address=add, noise_samples=noise_samples)
-        
-
-        print("\tIMDP is loaded.")
-        all_labsets = {I.label[s] for s in I.states}
-        B = Automata(f"{Automata_name}.hoa")
-        print("\tWill build product...")
-        P = Product(I, B)
-        print("\tProduct is built.")
-
-        results = {}
-
-        print("\t\tWill run value iteration...")
-        up_contrac_fctr = 0.9999 # if model_type == uav_str else 0.99
-        results_val_iter = value_iteration_scope(P, up_contrac_fctr)
-        plot_init_evolution_val_iter(results_val_iter, add, Automata_name)
-        print("\t\tValue iteration is done.")
+    for Automata_name in os.listdir(Automata_folder):
+        csv_path = Path(f"results/gen_imdp_info/IMDPs_info_{model_type}_{Automata_name}.csv")
 
 
-        print("\t\tWill run strategy improve ...")
-        results_strtgy = strategy_improve_scope(P)
-        plot_init_evolution_stra_impr(results_strtgy, add, Automata_name)
-        print("\t\tstrategy improve is done.")
+        for item in adds[model_type]:
 
-        results.update({qual_time_str: P.qualitative_time_sec})
-        results.update(results_val_iter)
-        results.update(results_strtgy)
+            add = item["address"]
+            exported_states = item.get("states", "0")
+            transitions = item.get("transitions", "0")
+
+            print(f"Will Process IMDP {add} and Automata {Automata_name}")
+            
+            results = {}
+
+            if sys.argv[1] == "toy":
+                from toy_imdp_2 import ToyIMDP
+                I = ToyIMDP()
+            else:
+                I = IMDP(model_type=model_type, address=add, noise_samples=noise_samples)
+
+                results.update({
+                    Exported_States_PRISM_str: exported_states,
+                    transitions_str: transitions})      
+
+            # print("\tIMDP is loaded.")
+            all_labsets = {I.label[s] for s in I.states}
+            B = Automata(f"{Automata_name}")
+
+            print("\tAutomaton AP:", B.ap)
+            print("\tAutomaton init:", B.init)
+            print("\tAutomaton acc:", B.acc)
+
+            reached_states = [s for s in I.states if "reached" in I.label.get(s, frozenset())]
+            print("\tNumber of IMDP states labeled reached:", len(reached_states))
+            # print("First reached states:", reached_states[:20])
 
 
-        folder = os.path.join("results", "each_imdp_result")
-        os.makedirs(folder, exist_ok=True)
-
-        pd.DataFrame.from_dict(results, orient="index").to_csv(os.path.join(folder, f"Automata_{Automata_name}_{add[:14]}_results.csv"))
-
-        print(f"\tUpdating results to CSV...")
-
-        update_csv_reslt(csv_path, add, results)
-        print(f"\tCSV is updated.")
+            print("\t\tWill build product...")
+            P = Product(I, B)
+            # print("\tProduct is built.")
 
 
-    print("Generating all plots...")
-    generate_all_plots(csv_path, Automata_name)
-    print("All done!")
+            print("Number of reachable product states:", len(P.states))
+            print("Number of accepting product states:", len(P.acc_states))
+            # print("Some accepting product states:", list(P.acc_states)[:20])
+            print("Number of initial product states:", len(P.init_states))
+            # print("Some initial product states:", list(P.init_states)[:20])
+            print("Number of accepting initial product states:", len(P.init_states & P.acc_states))
+            
+            print("Number of accepting end components:", len(P.aecs))
+            print(f"\tTarget states: {len(P.target)} for IMDP {add} and Automata {Automata_name}")
+
+            print("\n\n\n")
+
+        #     print("\t\tWill run value iteration...")
+        #     up_contrac_fctr = 0.9999 # if model_type == uav_str else 0.99
+        #     results_val_iter = value_iteration_scope(P, up_contrac_fctr)
+        #     plot_init_evolution_val_iter(results_val_iter, add, Automata_name)
+        #     print("\t\tValue iteration is done.")
+
+
+        #     print("\t\tWill run strategy improve ...")
+        #     results_strtgy = strategy_improve_scope(P)
+        #     plot_init_evolution_stra_impr(results_strtgy, add, Automata_name)
+        #     print("\t\tstrategy improve is done.")
+
+        #     results.update({qual_time_str: P.qualitative_time_sec})
+        #     results.update(results_val_iter)
+        #     results.update(results_strtgy)
+
+
+        #     folder = os.path.join("results", "each_imdp_result")
+        #     os.makedirs(folder, exist_ok=True)
+
+        #     pd.DataFrame.from_dict(results, orient="index").to_csv(os.path.join(folder, f"Automata_{Automata_name}_{add[:14]}_results.csv"))
+
+        #     print(f"\tUpdating results to CSV...")
+
+        #     update_csv_reslt(csv_path, add, results)
+        #     print(f"\tCSV is updated.")
+
+
+        # print("Generating all plots...")
+        # generate_all_plots(csv_path, Automata_name)
+        # print("All done!")
 
 
     
