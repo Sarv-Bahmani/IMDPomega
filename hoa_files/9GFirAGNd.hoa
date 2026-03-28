@@ -1,0 +1,21 @@
+HOA: v1
+name: "G(!deadlock & F(init | reached))"
+States: 3
+Start: 0
+AP: 3 "init" "reached" "deadlock"
+acc-name: Buchi
+Acceptance: 1 Inf(0)
+properties: trans-labels explicit-labels state-acc complete
+properties: deterministic stutter-invariant
+--BODY--
+State: 0 {0}
+[0&!2 | 1&!2] 0
+[!0&!1&!2] 1
+[2] 2
+State: 1
+[0&!2 | 1&!2] 0
+[!0&!1&!2] 1
+[2] 2
+State: 2
+[t] 2
+--END--

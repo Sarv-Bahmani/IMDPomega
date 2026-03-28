@@ -1,19 +1,20 @@
 HOA: v1
-name: "FGg"
+name: "FG(init | reached) & G!deadlock"
 States: 3
 Start: 0
-AP: 1 "g"
+AP: 3 "init" "reached" "deadlock"
 acc-name: Buchi
 Acceptance: 1 Inf(0)
 properties: trans-labels explicit-labels state-acc complete
 properties: stutter-invariant very-weak
 --BODY--
 State: 0
-[t] 0
-[0] 1
+[!2] 0
+[0&!2 | 1&!2] 1
+[2] 2
 State: 1 {0}
-[0] 1
-[!0] 2
+[0&!2 | 1&!2] 1
+[!0&!1 | 2] 2
 State: 2
 [t] 2
 --END--
