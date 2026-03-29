@@ -163,7 +163,7 @@ def plot_x(results, x_var, y_var, pic_name, x_lab, unit=1, y_label=None, line_la
         tick.label1.set_fontsize(BASE_FONTSIZE)
 
     fig.tight_layout()
-    out_dir = os.path.join("results", "plots")
+    out_dir = os.path.join(results_path, "plots")
     os.makedirs(out_dir, exist_ok=True)
     fig.savefig(os.path.join(out_dir, f"{pic_name}.png"), dpi=500)
 
@@ -186,7 +186,7 @@ def plot_ratio_scatter(data, Automata_name):
 
     plt.tight_layout()
 
-    folder = os.path.join("results", "plots")
+    folder = os.path.join(results_path, "plots")
     os.makedirs(folder, exist_ok=True)
 
 
@@ -231,27 +231,27 @@ def generate_all_plots(csv_path, Automata_name):
 
 
 if __name__ == "__main__":
-   
 
-    if len(sys.argv) < 3:
-            print("Usage: python imdp_runner.py <Model Type> <Automata folder address>")
+    if len(sys.argv) < 4:
+            print("Usage: python imdp_runner.py <Model Type> <Automata folder address> <results_path>")
             sys.exit(1)
     print("Starting IMDP Runner...")
 
     model_type = sys.argv[1]
     Automata_folder = sys.argv[2]
+    results_path = sys.argv[3]
 
     json_path = Path("imdp_adds.json")
     with json_path.open('r') as f:
         adds = json.load(f)
 
-    if model_type == "toy":
-        adds = {}
-        adds[model_type] = [sys.argv[1]]
-        adds["address"] = sys.argv[1]
+    # if model_type == "toy":
+    #     adds = {}
+    #     adds[model_type] = [sys.argv[1]]
+    #     adds["address"] = sys.argv[1]
     
     for Automata_name in os.listdir(Automata_folder):
-        csv_path = Path(f"results/gen_imdp_info/IMDPs_info_{model_type}_{Automata_name}.csv")
+        csv_path = Path(f"{results_path}/gen_imdp_info/IMDPs_info_{model_type}_{Automata_name}.csv")
 
 
         for item in adds[model_type]:
@@ -260,25 +260,19 @@ if __name__ == "__main__":
             exported_states = item.get("states", "0")
             transitions = item.get("transitions", "0")
 
-            print(f"Will Process IMDP {add} and Automata {Automata_name}")
-            
             results = {}
+            results.update({Exported_States_PRISM_str: exported_states, transitions_str: transitions})      
+            
+            print(f"Will Process IMDP {add} and Automata {Automata_name}")
+            I = IMDP(model_type=model_type, address=add, noise_samples=noise_samples)
 
-            if model_type == "toy":
-                from toy_imdp_3 import ToyIMDP
-                I = ToyIMDP()
-            else:
-                I = IMDP(model_type=model_type, address=add, noise_samples=noise_samples)
-
-                results.update({
-                    Exported_States_PRISM_str: exported_states,
-                    transitions_str: transitions})      
+            # if model_type == "toy":
+            #     from toy_imdp_3 import ToyIMDP
+            #     I = ToyIMDP()
 
             print("\tIMDP is loaded.")
             all_labsets = {I.label[s] for s in I.states}
             B = Automata(Automata_folder, Automata_name)
-
-
 
             reached_states = [s for s in I.states if "reached" in I.label.get(s, frozenset())]
 
@@ -306,7 +300,7 @@ if __name__ == "__main__":
             results.update(results_strtgy)
 
 
-            folder = os.path.join("results", "each_imdp_result")
+            folder = os.path.join(results_path, "each_imdp_result")
             os.makedirs(folder, exist_ok=True)
 
             pd.DataFrame.from_dict(results, orient="index").to_csv(os.path.join(folder, f"Automata_{Automata_name}_{add[:14]}_results.csv"))
