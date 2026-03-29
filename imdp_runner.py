@@ -231,27 +231,25 @@ def generate_all_plots(csv_path, Automata_name):
 
 
 if __name__ == "__main__":
+   
 
-    if sys.argv[1] == "toy":
-        model_type = "toy"
-        adds = {}
-        adds[model_type] = [sys.argv[1]]
-        Automata_name = sys.argv[1]
-        
-    else:
-        if len(sys.argv) < 3:
-                print("Usage: python imdp_runner.py <Model Type> <Automata folder address>")
-                sys.exit(1)
-        print("Starting IMDP Runner...")
-        model_type = sys.argv[1]
-        Automata_folder = sys.argv[2]
+    if len(sys.argv) < 3:
+            print("Usage: python imdp_runner.py <Model Type> <Automata folder address>")
+            sys.exit(1)
+    print("Starting IMDP Runner...")
+
+    model_type = sys.argv[1]
+    Automata_folder = sys.argv[2]
 
     json_path = Path("imdp_adds.json")
     with json_path.open('r') as f:
         adds = json.load(f)
 
-
-
+    if model_type == "toy":
+        adds = {}
+        adds[model_type] = [sys.argv[1]]
+        adds["address"] = sys.argv[1]
+    
     for Automata_name in os.listdir(Automata_folder):
         csv_path = Path(f"results/gen_imdp_info/IMDPs_info_{model_type}_{Automata_name}.csv")
 
@@ -266,8 +264,8 @@ if __name__ == "__main__":
             
             results = {}
 
-            if sys.argv[1] == "toy":
-                from toy_imdp_2 import ToyIMDP
+            if model_type == "toy":
+                from toy_imdp_3 import ToyIMDP
                 I = ToyIMDP()
             else:
                 I = IMDP(model_type=model_type, address=add, noise_samples=noise_samples)
@@ -291,6 +289,10 @@ if __name__ == "__main__":
 
             print(f"\tTarget states: {len(P.target)} for IMDP {add} and Automata {Automata_name}")
 
+            print("\t\tWill run strategy improve ...")
+            results_strtgy = strategy_improve_scope(P)
+            plot_init_evolution_stra_impr(results_strtgy, add, Automata_name)
+            print("\t\tstrategy improve is done.")
 
             print("\t\tWill run value iteration...")
             up_contrac_fctr = 0.9999 # if model_type == uav_str else 0.99
@@ -298,11 +300,6 @@ if __name__ == "__main__":
             plot_init_evolution_val_iter(results_val_iter, add, Automata_name)
             print("\t\tValue iteration is done.")
 
-
-            print("\t\tWill run strategy improve ...")
-            results_strtgy = strategy_improve_scope(P)
-            plot_init_evolution_stra_impr(results_strtgy, add, Automata_name)
-            print("\t\tstrategy improve is done.")
 
             results.update({qual_time_str: P.qualitative_time_sec})
             results.update(results_val_iter)
