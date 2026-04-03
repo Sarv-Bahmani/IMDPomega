@@ -1,0 +1,28 @@
+HOA: v1
+name: "GR1_init_reached_no_deadlock"
+States: 4
+Start: 0
+AP: 3 "init" "reached" "deadlock"
+acc-name: Buchi
+Acceptance: 1 Inf(0)
+properties: trans-labels explicit-labels state-acc complete
+
+--BODY--
+
+State: 0
+[t] 0
+[t] 1
+
+State: 1 {0}
+[0 & !2] 2
+[!0 | 2] 1
+
+State: 2 {0}
+[1 & !2] 3
+[!1 | 2] 2
+
+State: 3
+[1 & !2] 2
+[!1 | 2] 3
+
+--END--
